@@ -1,12 +1,12 @@
 import pygame
-import Draw
-import Point
-import Convert
 import File
+from Draw import Draw
+import Point
+import Transfer
+import Convert
 from datetime import datetime
 
 pygame.init()
-
 
 screenWidth = 1200
 screenHeight = 500
@@ -31,6 +31,8 @@ font = pygame.font.SysFont("Corbel", 24)
 screen = pygame.display.set_mode([screenWidth, screenHeight]) 
 pygame.display.set_caption("PathGen")
 
+draw = Draw(pygame, screen, backgroundImg, screenWidth, screenHeight, font, fieldWidth, fieldHeight)
+
 running = True
 while running:
 
@@ -41,24 +43,37 @@ while running:
         if event.type == pygame.MOUSEBUTTONUP:
             selectedPoint = Point.clicked(Convert.getFieldPos(pygame.mouse.get_pos(), fieldWidth, fieldHeight), fieldWidth, fieldHeight, pygame, selectedPoint, newScreenWidth)
             if selectedPoint != None:
-                selectedPoint = Draw.clickedInfo(pygame, selectedPoint, fieldWidth, fieldHeight, fileName)
+                selectedPoint = draw.clickedInfo(selectedPoint, fileName)
+            draw.uploadButtons(fileName)
         
         if event.type == pygame.KEYDOWN:
             if selectedPoint != None:
                 if event.key in (pygame.K_0, pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9, pygame.K_PERIOD):
                     editorString += event.unicode
-                editorString2 += event.unicode
+                    editorString2 += event.unicode
+                if event.key == pygame.K_BACKSPACE:
+                    if len(editorString) > 0:
+                        editorString = editorString.rstrip(editorString[len(editorString) - 1])
+                    if len(editorString2) > 0:
+                        editorString2 = editorString2.rstrip(editorString2[len(editorString2) - 1])
+                else:
+                    editorString2 += event.unicode
                 if selectedValue == 1:
                     if editorString != '':
                         selectedPoint.angle = Convert.degreesToRadians(float(editorString))
+                        selectedPoint.angle = selectedPoint.angle % 360
                 if selectedValue == 2:
-                    selectedPoint.speed = float(editorString)
+                    if editorString != '':
+                        selectedPoint.speed = float(editorString)
                 if selectedValue == 3:
-                    selectedPoint.time = float(editorString)
+                    if editorString != '':
+                        selectedPoint.time = float(editorString)
                 if selectedValue == 4:
-                    selectedPoint.x = float(editorString)
+                    if editorString != '':
+                        selectedPoint.x = float(editorString)
                 if selectedValue == 5:
-                    selectedPoint.y = float(editorString)
+                    if editorString != '':
+                        selectedPoint.y = float(editorString)
                 if selectedValue == 6:
                     fileName = editorString2.rstrip("\r")
                 if selectedValue == 7:
@@ -79,11 +94,11 @@ while running:
             
     ############
 
-    Draw.drawField(backgroundImg, screen, pygame, screenWidth, screenHeight)
-    Draw.drawPoints(pygame, screen, Point.getPoints())
-    Draw.drawMouseCoords(pygame, screen, font, fieldWidth, fieldHeight)
+    draw.drawField()
+    draw.drawPoints(Point.getPoints())
+    draw.drawMouseCoords(fileName)
     if selectedPoint != None:
-        selectedValue = Draw.drawPointInfo(pygame, screen, font, selectedPoint, fileName, saveName)
+        selectedValue = draw.drawPointInfo(selectedPoint, fileName, saveName)
 
     ############
     pygame.display.flip()

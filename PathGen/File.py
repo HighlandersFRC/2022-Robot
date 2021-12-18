@@ -1,18 +1,21 @@
 import math
 import Convert
 import Point
+import Transfer
 import glob
 import json
 from paramiko import SSHClient
 import paramiko
 from scp import SCPClient
 
-
 ssh = SSHClient()
 ssh.load_system_host_keys()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('172.22.11.2', username='lvuser', password='')
-scp = SCPClient(ssh.get_transport())
+try:
+    ssh.connect('10.44.99.2', username='lvuser', password='', timeout=1)
+    scp = SCPClient(ssh.get_transport())
+except TimeoutError:
+    print('Timeout error')
 
 def uploadFile(localFilePath):
     scp.put(localFilePath, remote_path='/home/lvuser/deploy')

@@ -1,6 +1,7 @@
 from datetime import datetime
 import math
 import Draw
+import Transfer
 import Convert
 import json
 
@@ -60,17 +61,18 @@ def deletePoint(index):
         points[x].index = x
 
 def savePath(fileName):
-    jsonPoints = []
-    for point in points:
-        point.color = (255, 0, 0)
-        jsonPoints.append(point.toJSON())
-    try:
-        outfile = open(f"json-paths/{fileName}.json", "w")
-        # with open(f"json-paths/{fileName}.json", "w") as outfile:
-            # json.dump(jsonPoints, outfile, indent=2)
-    except:
-        outfile = open(f"json-paths/Path_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json", "w")
-        # with open(f"json-paths/Path_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json", "w") as outfile:
-    finally:
-        json.dump(jsonPoints, outfile, indent=2)
-        outfile.close()
+    if len(points) > 0:
+        jsonPoints = []
+        for point in points:
+            point.color = (255, 0, 0)
+            jsonPoints.append(point.toJSON())
+        try:
+            outfile = open(f"json-paths/{fileName}.json", "w")
+            # with open(f"json-paths/{fileName}.json", "w") as outfile:
+                # json.dump(jsonPoints, outfile, indent=2)
+        except:
+            outfile = open(f"json-paths/Path_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json", "w")
+            # with open(f"json-paths/Path_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json", "w") as outfile:
+        finally:
+            json.dump(jsonPoints, outfile, indent=2)
+            outfile.close()
