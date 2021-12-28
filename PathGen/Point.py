@@ -1,14 +1,12 @@
 from datetime import datetime
 import math
-import Draw
-import Transfer
 import Convert
 import json
 
 points = []
 
 class Point:
-    def __init__(self, x, y, fieldWidth, fieldHeight, angle, speed, time, color):
+    def __init__(self, x, y, fieldWidth, fieldHeight, angle, speed, time, deltaTime, color):
         self.x = x
         self.y = y
         self.pixelX = (x / ((1600 / fieldWidth) * (15.98295 / 1057)) ) + 218 * (fieldWidth / 1600)
@@ -16,6 +14,7 @@ class Point:
         self.angle = angle
         self.speed = speed
         self.time = time
+        self.deltaTime = deltaTime
         self.color = color
         self.index = len(points)
 
@@ -26,11 +25,11 @@ class Point:
     def toJSON(self):
         return self.__dict__
     
-def clicked(mousePos, fieldWidth, fieldHeight, pygame, selectedPoint, imgWidth):
+def clicked(mousePos, fieldWidth, fieldHeight, pygame, selectedPoint, imgWidth, draw):
     mousePixelPos = list(pygame.mouse.get_pos())
     mouseIsOnPoint = False
     for point in points:
-        if Convert.getPixelDist(mousePixelPos[0], mousePixelPos[1], point.pixelX, point.pixelY) < 4:
+        if Convert.getDist(mousePixelPos[0], mousePixelPos[1], point.pixelX, point.pixelY) < 4:
             point.color = (0, 0, 255)
             if selectedPoint != None:
                 if point.index != selectedPoint.index:
@@ -38,12 +37,15 @@ def clicked(mousePos, fieldWidth, fieldHeight, pygame, selectedPoint, imgWidth):
             selectedPoint = point
             mouseIsOnPoint = True
     if not mouseIsOnPoint and pygame.mouse.get_pos()[0] < imgWidth:
-        points.append( Point(mousePos[0], mousePos[1], fieldWidth, fieldHeight, 0.0, 0.0, 0.0, (255, 0, 0)) )
+       if len(points) == 0:
+            points.append( Point(mousePos[0], mousePos[1], fieldWidth, fieldHeight, 0.0, 0.0, 0.0, 0.0, (255, 0, 0)))
+       else:
+             points.append( Point(mousePos[0], mousePos[1], fieldWidth, fieldHeight, 0.0, 0.0, 0.0, 1.0, (255, 0, 0)))
+             draw.setTotalTime(updatePointTimes())
     return selectedPoint
 
 def saveSelectedPoint(selectedPoint, fieldWidth, fieldHeight):
-    while selectedPoint.angle > 360:
-        selectedPoint.angle -= 360
+    selectedPoint.angle = selectedPoint.angle % 360
     points[selectedPoint.index] = selectedPoint
     points[selectedPoint.index].updatePixelPos(fieldWidth, fieldHeight)
 
@@ -59,6 +61,7 @@ def deletePoint(index):
     del points[index]
     for x in range(len(points)):
         points[x].index = x
+    updatePointTimes()
 
 def savePath(fileName):
     if len(points) > 0:
@@ -76,3 +79,12 @@ def savePath(fileName):
         finally:
             json.dump(jsonPoints, outfile, indent=2)
             outfile.close()
+        return True
+    return False
+
+def updatePointTimes():
+    totalTime = 0
+    for i in range(len(points)):
+        totalTime += points[i].deltaTime
+        points[i].time = totalTime
+    return totalTime

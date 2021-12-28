@@ -19,6 +19,10 @@ class Draw:
         self.fieldHeight = fieldHeight
         self.msg = ''
         self.msgColor = (255, 0, 0)
+        self.totalTime = 0
+
+    def setTotalTime(self, time):
+        self.totalTime = time
 
     def setMsg(self, msg, msgColor=(255, 0, 0)):
         self.msg = msg
@@ -52,7 +56,7 @@ class Draw:
 
         for point in points:
             radius = 4
-            if Convert.getPixelDist(mousePosPixels[0], mousePosPixels[1], point.pixelX, point.pixelY) < 4 or point.color == (0, 0, 255):
+            if Convert.getDist(mousePosPixels[0], mousePosPixels[1], point.pixelX, point.pixelY) < 4 or point.color == (0, 0, 255):
                 radius = 6
             self.pygame.draw.line(self.screen, (255, 0, 0), (prevX, prevY), (point.pixelX, point.pixelY), 3)
             prevX = point.pixelX
@@ -79,6 +83,14 @@ class Draw:
 
         self.screen.blit(upload, (1057, 202))
         self.screen.blit(all, (1080, 228))
+
+        #Download all button
+        self.pygame.draw.rect(self.screen, (255, 255, 255), (1050, 300, 100, 50))
+
+        download = self.font.render("DOWNLD", True, (0, 0, 0))
+
+        self.screen.blit(download, (1051, 302))
+        self.screen.blit(all, (1080, 328))
 
     def drawMsg(self):
         text = self.font.render(str(self.msg), True, self.msgColor)
@@ -132,13 +144,15 @@ class Draw:
         #Render text
         pointAngle = self.font.render("Angle: " + str( math.floor((Convert.radiansToDegrees(point.angle)) * 10) / 10 ), True, pointAngleColor)
         pointSpeed = self.font.render("Speed: " + str( math.floor((point.speed) * 100) / 100 ), True, pointSpeedColor)
-        pointTime = self.font.render("Time: " + str( math.floor((point.time) * 100) / 100 ), True, pointTimeColor)
+        pointTime = self.font.render("Time from prev: " + str( math.floor((point.deltaTime) * 100) / 100 ), True, pointTimeColor)
         pointX = self.font.render("X: " + str( math.floor((point.x) * 100) / 100 ), True, pointXColor)
         pointY = self.font.render("Y: " + str( math.floor((point.y) * 100) / 100 ), True, pointYColor)
         pathName = self.font.render(fileName, True, pathNameColor)
         saveName = self.font.render(jsonName, True, saveNameColor)
 
         pointIndex = self.font.render("Index: " + str(point.index), True, (255, 255, 255))
+        pathTime = self.font.render("Path Time: " + str(self.totalTime), True, (255, 255, 255))
+        timeToPoint = self.font.render("Time to point: " + str(point.time), True, (255, 255, 255))
 
         #Draw text
         self.screen.blit(pointAngle, (infoX, 10))
@@ -149,6 +163,8 @@ class Draw:
         self.screen.blit(pointIndex, (infoX, 350))
         self.screen.blit(pathName, (infoX, 470))
         self.screen.blit(saveName, (1015, 10))
+        self.screen.blit(pathTime, (1015, 370))
+        self.screen.blit(timeToPoint, (1015, 400))
 
         #Angle visual
         self.pygame.draw.circle(self.screen, (255, 255, 0), (945, 70), 35, 0)
@@ -202,7 +218,7 @@ class Draw:
             point.y += sens
 
         #Angle selection
-        if Convert.getPixelDist(x, y, 945, 70) <= 35:
+        if Convert.getDist(x, y, 945, 70) <= 35:
             point.angle = (math.pi / 2) - math.atan2(x - 945, y - 70)
             while point.angle < 0:
                 point.angle += 2 * math.pi
@@ -223,15 +239,18 @@ class Draw:
     def uploadButtons(self, fileName):
         x = self.pygame.mouse.get_pos()[0]
         y = self.pygame.mouse.get_pos()[1]
-        
+
         #Upload path
         if x >= 1050 and x <= 1150 and y >= 100 and y <= 150:
-            Point.savePath(fileName)
+            bool = Point.savePath(fileName)
             try:
                 File.uploadFile('json-paths/' + fileName + '.json')
                 self.setMsg('Uploaded Path', (15, 168, 30))
             except:
-                self.setMsg('Upload Error')
+                if not bool:
+                    self.setMsg('No Path to Upload')
+                else:
+                    self.setMsg('Upload Failed')
 
         #Upload all paths
         if x >= 1050 and x <= 1150 and y >= 200 and y <= 250:
@@ -240,4 +259,12 @@ class Draw:
                 File.uploadAll()
                 self.setMsg('Uploaded All Paths', (15, 168, 30))
             except:
-                self.setMsg('Upload Error')
+                self.setMsg('Upload All Failed')
+
+        #Download all paths
+        if x >= 1050 and x <= 1150 and y >= 300 and y <= 350:
+            try:
+                File.downloadAll()
+                self.setMsg('Downloaded All Paths', (15, 168, 30))
+            except:
+                self.setMsg('Download Failed')

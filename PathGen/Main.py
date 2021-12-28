@@ -1,5 +1,6 @@
 import pygame
 import File
+import math
 from Draw import Draw
 import Point
 import Transfer
@@ -41,7 +42,7 @@ while running:
             running = False
         
         if event.type == pygame.MOUSEBUTTONUP:
-            selectedPoint = Point.clicked(Convert.getFieldPos(pygame.mouse.get_pos(), fieldWidth, fieldHeight), fieldWidth, fieldHeight, pygame, selectedPoint, newScreenWidth)
+            selectedPoint = Point.clicked(Convert.getFieldPos(pygame.mouse.get_pos(), fieldWidth, fieldHeight), fieldWidth, fieldHeight, pygame, selectedPoint, newScreenWidth, draw)
             if selectedPoint != None:
                 selectedPoint = draw.clickedInfo(selectedPoint, fileName)
             draw.uploadButtons(fileName)
@@ -61,13 +62,14 @@ while running:
                 if selectedValue == 1:
                     if editorString != '':
                         selectedPoint.angle = Convert.degreesToRadians(float(editorString))
-                        selectedPoint.angle = selectedPoint.angle % 360
+                        selectedPoint.angle = selectedPoint.angle % (math.pi * 2)
                 if selectedValue == 2:
                     if editorString != '':
                         selectedPoint.speed = float(editorString)
                 if selectedValue == 3:
                     if editorString != '':
-                        selectedPoint.time = float(editorString)
+                        selectedPoint.deltaTime = float(editorString)
+                        draw.setTotalTime(Point.updatePointTimes())
                 if selectedValue == 4:
                     if editorString != '':
                         selectedPoint.x = float(editorString)
