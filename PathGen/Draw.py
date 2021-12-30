@@ -1,10 +1,8 @@
 import math
 
-import pygame
 import Point
 import Convert
 import File
-import Transfer
 
 class Draw:
 
@@ -22,7 +20,8 @@ class Draw:
         self.totalTime = 0
 
     def setTotalTime(self, time):
-        self.totalTime = time
+        if time > 0.0:
+            self.totalTime = time
 
     def setMsg(self, msg, msgColor=(255, 0, 0)):
         self.msg = msg
@@ -58,7 +57,8 @@ class Draw:
             radius = 4
             if Convert.getDist(mousePosPixels[0], mousePosPixels[1], point.pixelX, point.pixelY) < 4 or point.color == (0, 0, 255):
                 radius = 6
-            self.pygame.draw.line(self.screen, (255, 0, 0), (prevX, prevY), (point.pixelX, point.pixelY), 3)
+            #self.pygame.draw.line(self.screen, (255, 0, 0), (prevX, prevY), (point.pixelX, point.pixelY), 3)
+            self.drawConstAccelPath(points, 0.01)
             prevX = point.pixelX
             prevY = point.pixelY
             self.pygame.draw.line(self.screen, (0, 255, 0), (point.pixelX - 1, point.pixelY - 1), (20 * math.cos(point.angle) + point.pixelX - 1, 20 * math.sin(point.angle) + point.pixelY - 1), 2)
@@ -104,6 +104,7 @@ class Draw:
         pointYColor = (255, 255, 255)
         pathNameColor = (255, 255, 255)
         saveNameColor = (255, 255, 255)
+        interpNameColor = (255, 255, 255)
 
         infoX = 890
 
@@ -141,6 +142,10 @@ class Draw:
             saveNameColor = (0, 255, 0)
             sel = 7
 
+        if x >= 1015 and x <= 1115 and y >= 450 and y <= 474:
+            interpNameColor = (0, 255, 0)
+            sel = 8
+
         #Render text
         pointAngle = self.font.render("Angle: " + str( math.floor((Convert.radiansToDegrees(point.angle)) * 10) / 10 ), True, pointAngleColor)
         pointSpeed = self.font.render("Speed: " + str( math.floor((point.speed) * 100) / 100 ), True, pointSpeedColor)
@@ -153,6 +158,7 @@ class Draw:
         pointIndex = self.font.render("Index: " + str(point.index), True, (255, 255, 255))
         pathTime = self.font.render("Path Time: " + str(self.totalTime), True, (255, 255, 255))
         timeToPoint = self.font.render("Time to point: " + str(point.time), True, (255, 255, 255))
+        interpRange = self.font.render("Interp: " + str(point.interpolationRange), True, interpNameColor)
 
         #Draw text
         self.screen.blit(pointAngle, (infoX, 10))
@@ -165,6 +171,7 @@ class Draw:
         self.screen.blit(saveName, (1015, 10))
         self.screen.blit(pathTime, (1015, 370))
         self.screen.blit(timeToPoint, (1015, 400))
+        self.screen.blit(interpRange, (1015, 450))
 
         #Angle visual
         self.pygame.draw.circle(self.screen, (255, 255, 0), (945, 70), 35, 0)
@@ -268,3 +275,93 @@ class Draw:
                 self.setMsg('Downloaded All Paths', (15, 168, 30))
             except:
                 self.setMsg('Download Failed')
+
+    def drawConstAccelPath(self, points, samplePeriod):
+        pi = math.pi
+        for p in points:
+            if p.index != 0 and p.index != len(points) - 1:
+                p1 = points[p.index - 1]
+                p2 = points[p.index]
+                p3 = points[p.index + 1]
+
+                interpFraction = p2.interpolationRange
+
+                if interpFraction == 1:
+                    interpFraction = 0.99
+
+                t1 = p1.time + (p2.time - p1.time) * interpFraction
+                t2 = p2.time + (p3.time - p2.time) * (1 - interpFraction)
+                
+                v1 = Convert.getDist(p1.x, p1.y, p2.x, p2.y) / (p2.time - p1.time)
+                v2 = Convert.getDist(p2.x, p2.y, p3.x, p3.y) / (p3.time - p2.time)
+
+                theta1 = (pi / 2) - math.atan2((p1.x - p2.x), (p1.y - p2.y))
+                theta2 = (pi / 2) - math.atan2((p3.x - p2.x), (p3.y - p2.y))
+
+                interpPoint1 = (p2.x + ((1 - interpFraction) * (Convert.getDist(p1.x, p1.y, p2.x, p2.y)) * math.cos(theta1)), p2.y + ((1 - interpFraction) * Convert.getDist(p2.x, p2.y, p1.x, p1.y)) * math.sin(theta1))
+                interpPoint2 = (p2.x + ((1 - interpFraction) * (Convert.getDist(p3.x, p3.y, p2.x, p2.y)) * math.cos(theta2)), p2.y + ((1 - interpFraction) * Convert.getDist(p2.x, p2.y, p3.x, p3.y)) * math.sin(theta2))
+
+                interpPoint1 = Convert.getPixelPos(interpPoint1, self.fieldWidth, self.fieldHeight)
+                interpPoint2 = Convert.getPixelPos(interpPoint2, self.fieldWidth, self.fieldHeight)
+
+                self.pygame.draw.line(self.screen, (255, 0, 0), ((p1.pixelX + p2.pixelX) / 2, (p1.pixelY + p2.pixelY) / 2), interpPoint1, 2)
+                self.pygame.draw.line(self.screen, (255, 0, 0), ((p3.pixelX + p2.pixelX) / 2, (p3.pixelY + p2.pixelY) / 2), interpPoint2, 2)
+
+                #self.pygame.draw.line(self.screen, (0, 255, 0), interpPoint1, interpPoint2, 2)
+
+                interpPoint1Meters = Convert.getFieldPos(interpPoint1, self.fieldWidth, self.fieldHeight)
+                interpPoint2Meters = Convert.getFieldPos(interpPoint2, self.fieldWidth, self.fieldHeight)
+                interpDistMeters = Convert.getDist(interpPoint1Meters[0], interpPoint1Meters[1], interpPoint2Meters[0], interpPoint2Meters[1])
+
+                targetTheta = pi + ((pi / 2) - math.atan2((interpPoint1Meters[0] - interpPoint2Meters[0]), (interpPoint1Meters[1] - interpPoint2Meters[1])))
+                targetTheta = targetTheta % (pi * 2)
+
+                time = t1
+                difTime = t2 - t1
+                difVel = v2 - v1
+                neededAccel = difVel / difTime
+                endDist = (neededAccel * difTime + v1) * (difTime)
+                theta1 += pi
+                theta1 = theta1 % (pi * 2)
+                if theta1 > targetTheta:
+                    difTheta = theta1 - targetTheta
+                else:
+                    difTheta = targetTheta - theta1
+                if difTheta > pi:
+                    difTheta = (pi * 2) - difTheta
+                while time <= t2 and time >= t1:
+                    currentDist = ((neededAccel * (time - t1) + v1) * (time - t1)) * (interpDistMeters / endDist)
+
+                    if theta1 < targetTheta:
+                        if abs(theta1 - targetTheta) < pi:
+                            currentTheta = theta1 + (difTheta * ((time - t1) / difTime))
+                        else:
+                            currentTheta = theta1 - (difTheta * ((time - t1) / difTime))
+                    else:
+                        if abs(theta1 - targetTheta) < pi:
+                            currentTheta = theta1 - (difTheta * ((time - t1) / difTime))
+                        else:
+                            currentTheta = theta1 + (difTheta * ((time - t1) / difTime))
+                    currentTheta = currentTheta % (pi * 2)
+
+                    x = interpPoint1Meters[0] + currentDist * math.cos(currentTheta)
+                    y = interpPoint1Meters[1] + currentDist * math.sin(currentTheta)
+                    point = Convert.getPixelPos((x, y), self.fieldWidth, self.fieldHeight)
+                    
+                    self.pygame.draw.circle(self.screen, (0, 255, 0), point, 1)
+
+                    time += samplePeriod
+                # print('Target: ' + str(targetTheta))
+                # print('Theta1: ' + str(theta1))
+                # print('Current: ' + str(currentTheta))
+                # print('DifTheta: ' + str(difTheta))
+                # print('EndDist: ' + str(endDist))
+                # print('InterpDist: ' + str(interpDistMeters))
+                
+
+                if p1.index == 0:
+                    self.pygame.draw.line(self.screen, (255, 0, 0), (points[0].pixelX, points[0].pixelY), ((p1.pixelX + p2.pixelX) / 2, (p1.pixelY + p2.pixelY) / 2), 2)
+                if p3.index == len(points) - 1:
+                    self.pygame.draw.line(self.screen, (255, 0, 0), (points[-1].pixelX, points[-1].pixelY), ((p3.pixelX + p2.pixelX) / 2, (p3.pixelY + p2.pixelY) / 2), 2)
+            elif len(points) == 2:
+                self.pygame.draw.line(self.screen, (255, 0, 0), (points[0].pixelX, points[0].pixelY), (points[1].pixelX, points[1].pixelY), 2)

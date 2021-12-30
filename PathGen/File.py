@@ -34,10 +34,13 @@ def uploadAll():
         scp.put(save, remote_path='/home/lvuser/deploy')
 
 def downloadAll():
-    files = scp.listdir()
+    sftp = ssh.open_sftp()
+    files = sftp.listdir('/home/lvuser/deploy')
+    print(str(files))
     for f in files:
         if f.endswith('.json'):
-            scp.get(remote_path='/home/lvuser/deploy/' + f, local_path='json-paths/' + f)
+            scp.get(remote_path='/home/lvuser/deploy/' + f, local_path='json-paths/')
+    
 
 def getSave(fileName, fieldWidth, fieldHeight):
     saves = glob.glob("json-paths/*.json*")
@@ -47,7 +50,7 @@ def getSave(fileName, fieldWidth, fieldHeight):
                 data = json.load(jsonSave)
                 newPoints = []
                 for x in range(len(data)):
-                    newPoints.append(Point.Point(data[x]["x"], data[x]["y"], fieldWidth, fieldHeight, data[x]["angle"], data[x]["speed"], data[x]["time"], data[x]["deltaTime"], data[x]["color"]))
+                    newPoints.append(Point.Point(data[x]["x"], data[x]["y"], fieldWidth, fieldHeight, data[x]["angle"], data[x]["speed"], data[x]["time"], data[x]["deltaTime"], data[x]["interpolationRange"], data[x]["color"]))
                 for x in range(len(newPoints)):
                     newPoints[x].index = x
             Point.setPoints(newPoints)

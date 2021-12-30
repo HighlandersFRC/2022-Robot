@@ -6,7 +6,7 @@ import json
 points = []
 
 class Point:
-    def __init__(self, x, y, fieldWidth, fieldHeight, angle, speed, time, deltaTime, color):
+    def __init__(self, x, y, fieldWidth, fieldHeight, angle, speed, time, deltaTime, interpolationRange, color):
         self.x = x
         self.y = y
         self.pixelX = (x / ((1600 / fieldWidth) * (15.98295 / 1057)) ) + 218 * (fieldWidth / 1600)
@@ -15,6 +15,7 @@ class Point:
         self.speed = speed
         self.time = time
         self.deltaTime = deltaTime
+        self.interpolationRange = interpolationRange
         self.color = color
         self.index = len(points)
 
@@ -38,9 +39,9 @@ def clicked(mousePos, fieldWidth, fieldHeight, pygame, selectedPoint, imgWidth, 
             mouseIsOnPoint = True
     if not mouseIsOnPoint and pygame.mouse.get_pos()[0] < imgWidth:
        if len(points) == 0:
-            points.append( Point(mousePos[0], mousePos[1], fieldWidth, fieldHeight, 0.0, 0.0, 0.0, 0.0, (255, 0, 0)))
+            points.append( Point(mousePos[0], mousePos[1], fieldWidth, fieldHeight, 0.0, 0.0, 0.0, 0.0, 0.0, (255, 0, 0)))
        else:
-             points.append( Point(mousePos[0], mousePos[1], fieldWidth, fieldHeight, 0.0, 0.0, 0.0, 1.0, (255, 0, 0)))
+             points.append( Point(mousePos[0], mousePos[1], fieldWidth, fieldHeight, 0.0, 0.0, 0.0, 1.0, 0.75, (255, 0, 0)))
              draw.setTotalTime(updatePointTimes())
     return selectedPoint
 

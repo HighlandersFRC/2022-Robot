@@ -51,7 +51,6 @@ while running:
             if selectedPoint != None:
                 if event.key in (pygame.K_0, pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9, pygame.K_PERIOD):
                     editorString += event.unicode
-                    editorString2 += event.unicode
                 if event.key == pygame.K_BACKSPACE:
                     if len(editorString) > 0:
                         editorString = editorString.rstrip(editorString[len(editorString) - 1])
@@ -67,7 +66,7 @@ while running:
                     if editorString != '':
                         selectedPoint.speed = float(editorString)
                 if selectedValue == 3:
-                    if editorString != '':
+                    if editorString != '' and float(editorString) > 0:
                         selectedPoint.deltaTime = float(editorString)
                         draw.setTotalTime(Point.updatePointTimes())
                 if selectedValue == 4:
@@ -80,6 +79,8 @@ while running:
                     fileName = editorString2.rstrip("\r")
                 if selectedValue == 7:
                     saveName = editorString2.rstrip("\r")
+                if selectedValue == 8:
+                    selectedPoint.interpolationRange = float(editorString)
             if event.key == pygame.K_RETURN:
                 selectedPoint.angle = selectedPoint.angle % 360
                 if selectedValue == 7:
