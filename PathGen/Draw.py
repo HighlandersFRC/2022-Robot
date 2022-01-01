@@ -18,6 +18,7 @@ class Draw:
         self.msg = ''
         self.msgColor = (255, 0, 0)
         self.totalTime = 0
+        self.showWheelPaths = True
 
     def setTotalTime(self, time):
         if time > 0.0:
@@ -91,6 +92,17 @@ class Draw:
 
         self.screen.blit(download, (1051, 302))
         self.screen.blit(all, (1080, 328))
+
+        #Toggle path button
+        if self.showWheelPaths:
+            wheelColor = (0, 255, 0)
+        else:
+            wheelColor = (255, 0, 0)
+        self.pygame.draw.rect(self.screen, wheelColor, (975, 225, 50, 50))
+        wheelLabel1 = self.font.render("Whl", True, (0, 0, 0))
+        wheelLabel2 = self.font.render("Path", True, (0, 0, 0))
+        self.screen.blit(wheelLabel1, (980, 227))
+        self.screen.blit(wheelLabel2, (978, 250))
 
     def drawMsg(self):
         text = self.font.render(str(self.msg), True, self.msgColor)
@@ -276,6 +288,10 @@ class Draw:
             except:
                 self.setMsg('Download Failed')
 
+        #Toggle path visibility
+        if x >= 975 and x <= 1025 and y >= 225 and y <= 275:
+            self.showWheelPaths = not self.showWheelPaths
+
     def drawConstAccelPath(self, points, samplePeriod):
         pi = math.pi
         for p in points:
@@ -349,6 +365,10 @@ class Draw:
                     point = Convert.getPixelPos((x, y), self.fieldWidth, self.fieldHeight)
                     
                     self.pygame.draw.circle(self.screen, (0, 255, 0), point, 1)
+                    if self.showWheelPaths:
+                        self.drawWheelsAtPoint(x, y, 0)
+                    # print(str(x) + ', ' + str(y))
+                    # print(str(Convert.getPixelPos((x, y), self.fieldWidth, self.fieldHeight)))
 
                     time += samplePeriod
                 # print('Target: ' + str(targetTheta))
@@ -365,3 +385,21 @@ class Draw:
                     self.pygame.draw.line(self.screen, (255, 0, 0), (points[-1].pixelX, points[-1].pixelY), ((p3.pixelX + p2.pixelX) / 2, (p3.pixelY + p2.pixelY) / 2), 2)
             elif len(points) == 2:
                 self.pygame.draw.line(self.screen, (255, 0, 0), (points[0].pixelX, points[0].pixelY), (points[1].pixelX, points[1].pixelY), 2)
+
+    def drawWheelsAtPoint(self, metersX, metersY, angle):
+        pi = math.pi
+        distM = 0.39513
+        fLAngle = ((3 * pi) / 4) + angle
+        fRAngle = (pi / 4) + angle
+        bLAngle = ((5 * pi) / 4) + angle
+        bRAngle = ((7 * pi) / 4) + angle
+
+        fL = Convert.getPixelPos([metersX + distM * math.cos(fLAngle), metersY + distM * math.sin(fLAngle)], self.fieldWidth, self.fieldHeight)
+        fR = Convert.getPixelPos([metersX + distM * math.cos(fRAngle), metersY + distM * math.sin(fRAngle)], self.fieldWidth, self.fieldHeight)
+        bL = Convert.getPixelPos([metersX + distM * math.cos(bLAngle), metersY + distM * math.sin(bLAngle)], self.fieldWidth, self.fieldHeight)
+        bR = Convert.getPixelPos([metersX + distM * math.cos(bRAngle), metersY + distM * math.sin(bRAngle)], self.fieldWidth, self.fieldHeight)
+
+        self.pygame.draw.circle(self.screen, (255, 0, 255), fL, 1)
+        self.pygame.draw.circle(self.screen, (255, 0, 255), fR, 1)
+        self.pygame.draw.circle(self.screen, (255, 0, 255), bL, 1)
+        self.pygame.draw.circle(self.screen, (255, 0, 255), bR, 1)
