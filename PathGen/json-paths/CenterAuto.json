@@ -1,0 +1,121 @@
+[
+  {
+    "x": 13.57,
+    "y": 2.84,
+    "pixelX": 619.6802460677715,
+    "pixelY": 317.3235315688837,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 0.0,
+    "deltaTime": 0.0,
+    "interpolationRange": 0.0,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 0
+  },
+  {
+    "x": 12.84,
+    "y": 2.44,
+    "pixelX": 592.859651482778,
+    "pixelY": 332.019747779839,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 1.0,
+    "deltaTime": 1.0,
+    "interpolationRange": 0.75,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 1
+  },
+  {
+    "x": 11.53,
+    "y": 2.41,
+    "pixelX": 544.7295433918991,
+    "pixelY": 333.1219639956607,
+    "angle": 0.8124186125847128,
+    "speed": 0.0,
+    "time": 2.0,
+    "deltaTime": 1.0,
+    "interpolationRange": 0.75,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 2
+  },
+  {
+    "x": 10.5,
+    "y": 3.5,
+    "pixelX": 506.88678664868917,
+    "pixelY": 293.0747748208073,
+    "angle": 1.18018928309721,
+    "speed": 0.0,
+    "time": 3.0,
+    "deltaTime": 1.0,
+    "interpolationRange": 0.75,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 3
+  },
+  {
+    "x": 10.42,
+    "y": 3.96,
+    "pixelX": 503.9475434064981,
+    "pixelY": 276.17412617820867,
+    "angle": 1.1606689862534054,
+    "speed": 0.0,
+    "time": 4.0,
+    "deltaTime": 1.0,
+    "interpolationRange": 0.75,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 4
+  },
+  {
+    "x": 10.74,
+    "y": 2.79,
+    "pixelX": 515.7045163752623,
+    "pixelY": 319.16055859525306,
+    "angle": 1.1441688336680205,
+    "speed": 0.0,
+    "time": 5.0,
+    "deltaTime": 1.0,
+    "interpolationRange": 0.75,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 5
+  },
+  {
+    "x": 13.52,
+    "y": 3.25,
+    "pixelX": 617.843219041402,
+    "pixelY": 302.2599099526544,
+    "angle": 0.0665681637758242,
+    "speed": 0.0,
+    "time": 7.0,
+    "deltaTime": 2.0,
+    "interpolationRange": 0.75,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 6
+  }
+]

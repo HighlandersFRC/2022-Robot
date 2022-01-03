@@ -1,0 +1,121 @@
+[
+  {
+    "x": 13.55,
+    "y": 2.82,
+    "pixelX": 618.9454352572237,
+    "pixelY": 318.05834237943145,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 0.0,
+    "deltaTime": 0.0,
+    "interpolationRange": 0.0,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 0
+  },
+  {
+    "x": 11.86,
+    "y": 2.25,
+    "pixelX": 556.8539217659373,
+    "pixelY": 339.00045048004284,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 1.0,
+    "deltaTime": 1.0,
+    "interpolationRange": 0.75,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 1
+  },
+  {
+    "x": 10.88,
+    "y": 2.33,
+    "pixelX": 520.8481920490967,
+    "pixelY": 336.06120723785176,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 2.0,
+    "deltaTime": 1.0,
+    "interpolationRange": 0.75,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 2
+  },
+  {
+    "x": 10.53,
+    "y": 3.31,
+    "pixelX": 507.9890028645108,
+    "pixelY": 300.05547752101114,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 3.0,
+    "deltaTime": 1.0,
+    "interpolationRange": 0.75,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 3
+  },
+  {
+    "x": 10.85,
+    "y": 3.85,
+    "pixelX": 519.745975833275,
+    "pixelY": 280.2155856362214,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 4.0,
+    "deltaTime": 1.0,
+    "interpolationRange": 0.75,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 4
+  },
+  {
+    "x": 11.75,
+    "y": 3.39,
+    "pixelX": 552.8124623079246,
+    "pixelY": 297.11623427882006,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 5.0,
+    "deltaTime": 1.0,
+    "interpolationRange": 0.75,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 5
+  },
+  {
+    "x": 13.6,
+    "y": 3.39,
+    "pixelX": 620.7824622835931,
+    "pixelY": 297.11623427882006,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 6.0,
+    "deltaTime": 1.0,
+    "interpolationRange": 0.75,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 6
+  }
+]

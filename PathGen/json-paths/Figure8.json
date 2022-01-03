@@ -1,0 +1,155 @@
+[
+  {
+    "x": 13.63,
+    "y": 2.82,
+    "pixelX": 621.8846784994148,
+    "pixelY": 318.05834237943145,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 0.0,
+    "deltaTime": 0.0,
+    "interpolationRange": 0.0,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 0
+  },
+  {
+    "x": 12.43,
+    "y": 1.81,
+    "pixelX": 577.7960298665487,
+    "pixelY": 355.1662883120937,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 0.5,
+    "deltaTime": 0.5,
+    "interpolationRange": 0.6,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 1
+  },
+  {
+    "x": 11.31,
+    "y": 2.73,
+    "pixelX": 536.6466244758738,
+    "pixelY": 321.3649910268964,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 1.0,
+    "deltaTime": 0.5,
+    "interpolationRange": 0.6,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 2
+  },
+  {
+    "x": 9.87,
+    "y": 3.93,
+    "pixelX": 483.7402461164344,
+    "pixelY": 277.27634239403034,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 1.5,
+    "deltaTime": 0.5,
+    "interpolationRange": 0.6,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 3
+  },
+  {
+    "x": 8.57,
+    "y": 2.73,
+    "pixelX": 435.97754343082954,
+    "pixelY": 321.3649910268964,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 2.0,
+    "deltaTime": 0.5,
+    "interpolationRange": 0.6,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 4
+  },
+  {
+    "x": 9.84,
+    "y": 1.73,
+    "pixelX": 482.63802990061276,
+    "pixelY": 358.10553155428477,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 2.5,
+    "deltaTime": 0.5,
+    "interpolationRange": 0.6,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 5
+  },
+  {
+    "x": 11.279999999999996,
+    "y": 2.750000000000001,
+    "pixelX": 535.5444082600519,
+    "pixelY": 320.6301802163486,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 3.0,
+    "deltaTime": 0.5,
+    "interpolationRange": 0.6,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 6
+  },
+  {
+    "x": 12.4,
+    "y": 3.91,
+    "pixelX": 576.6938136507271,
+    "pixelY": 278.01115320457814,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 3.5,
+    "deltaTime": 0.5,
+    "interpolationRange": 0.6,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 7
+  },
+  {
+    "x": 13.620000000000005,
+    "y": 2.82,
+    "pixelX": 621.517273094141,
+    "pixelY": 318.05834237943145,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 4.0,
+    "deltaTime": 0.5,
+    "interpolationRange": 0.75,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 8
+  }
+]

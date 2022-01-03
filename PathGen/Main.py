@@ -79,7 +79,7 @@ while running:
                     fileName = editorString2.rstrip("\r")
                 if selectedValue == 7:
                     saveName = editorString2.rstrip("\r")
-                if selectedValue == 8:
+                if selectedValue == 8 and not event.key in (pygame.K_0, pygame.K_PERIOD):
                     selectedPoint.interpolationRange = float(editorString)
             if event.key == pygame.K_RETURN:
                 selectedPoint.angle = selectedPoint.angle % 360

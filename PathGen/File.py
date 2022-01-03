@@ -41,7 +41,6 @@ def downloadAll():
         if f.endswith('.json'):
             scp.get(remote_path='/home/lvuser/deploy/' + f, local_path='json-paths/')
     
-
 def getSave(fileName, fieldWidth, fieldHeight):
     saves = glob.glob("json-paths/*.json*")
     for save in saves:

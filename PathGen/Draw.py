@@ -18,7 +18,7 @@ class Draw:
         self.msg = ''
         self.msgColor = (255, 0, 0)
         self.totalTime = 0
-        self.showWheelPaths = True
+        self.showWheelPaths = False
 
     def setTotalTime(self, time):
         if time > 0.0:
@@ -238,9 +238,10 @@ class Draw:
 
         #Angle selection
         if Convert.getDist(x, y, 945, 70) <= 35:
-            point.angle = (math.pi / 2) - math.atan2(x - 945, y - 70)
+            point.angle = math.atan2(y - 70, x - 945)
             while point.angle < 0:
                 point.angle += 2 * math.pi
+            
 
         Point.saveSelectedPoint(point, self.fieldWidth, self.fieldHeight)
 
@@ -307,12 +308,9 @@ class Draw:
 
                 t1 = p1.time + (p2.time - p1.time) * interpFraction
                 t2 = p2.time + (p3.time - p2.time) * (1 - interpFraction)
-                
-                v1 = Convert.getDist(p1.x, p1.y, p2.x, p2.y) / (p2.time - p1.time)
-                v2 = Convert.getDist(p2.x, p2.y, p3.x, p3.y) / (p3.time - p2.time)
 
-                theta1 = (pi / 2) - math.atan2((p1.x - p2.x), (p1.y - p2.y))
-                theta2 = (pi / 2) - math.atan2((p3.x - p2.x), (p3.y - p2.y))
+                theta1 = math.atan2((p1.y - p2.y), (p1.x - p2.x))
+                theta2 = math.atan2((p3.y - p2.y), (p3.x - p2.x))
 
                 interpPoint1 = (p2.x + ((1 - interpFraction) * (Convert.getDist(p1.x, p1.y, p2.x, p2.y)) * math.cos(theta1)), p2.y + ((1 - interpFraction) * Convert.getDist(p2.x, p2.y, p1.x, p1.y)) * math.sin(theta1))
                 interpPoint2 = (p2.x + ((1 - interpFraction) * (Convert.getDist(p3.x, p3.y, p2.x, p2.y)) * math.cos(theta2)), p2.y + ((1 - interpFraction) * Convert.getDist(p2.x, p2.y, p3.x, p3.y)) * math.sin(theta2))
@@ -329,8 +327,13 @@ class Draw:
                 interpPoint2Meters = Convert.getFieldPos(interpPoint2, self.fieldWidth, self.fieldHeight)
                 interpDistMeters = Convert.getDist(interpPoint1Meters[0], interpPoint1Meters[1], interpPoint2Meters[0], interpPoint2Meters[1])
 
-                targetTheta = pi + ((pi / 2) - math.atan2((interpPoint1Meters[0] - interpPoint2Meters[0]), (interpPoint1Meters[1] - interpPoint2Meters[1])))
+                targetTheta = pi + math.atan2((interpPoint1Meters[1] - interpPoint2Meters[1]), (interpPoint1Meters[0] - interpPoint2Meters[0]))
                 targetTheta = targetTheta % (pi * 2)
+
+                v1 = Convert.getDist(p1.x, p1.y, interpPoint1Meters[0], interpPoint1Meters[1]) / t1
+                v2 = Convert.getDist(p3.x, p3.y, interpPoint2Meters[0], interpPoint2Meters[1]) / (p3.time - t2)
+
+                t1Theta = (p2.angle - p1.angle) * (t1 / p2.deltaTime)
 
                 time = t1
                 difTime = t2 - t1
@@ -367,23 +370,26 @@ class Draw:
                     self.pygame.draw.circle(self.screen, (0, 255, 0), point, 1)
                     if self.showWheelPaths:
                         self.drawWheelsAtPoint(x, y, 0)
-                    # print(str(x) + ', ' + str(y))
-                    # print(str(Convert.getPixelPos((x, y), self.fieldWidth, self.fieldHeight)))
-
                     time += samplePeriod
-                # print('Target: ' + str(targetTheta))
-                # print('Theta1: ' + str(theta1))
-                # print('Current: ' + str(currentTheta))
-                # print('DifTheta: ' + str(difTheta))
-                # print('EndDist: ' + str(endDist))
-                # print('InterpDist: ' + str(interpDistMeters))
                 
 
+
                 if p1.index == 0:
+
                     self.pygame.draw.line(self.screen, (255, 0, 0), (points[0].pixelX, points[0].pixelY), ((p1.pixelX + p2.pixelX) / 2, (p1.pixelY + p2.pixelY) / 2), 2)
+                    
+                    
                 if p3.index == len(points) - 1:
+
                     self.pygame.draw.line(self.screen, (255, 0, 0), (points[-1].pixelX, points[-1].pixelY), ((p3.pixelX + p2.pixelX) / 2, (p3.pixelY + p2.pixelY) / 2), 2)
+            
             elif len(points) == 2:
+                p1 = points[0]
+                p2 = points[1]
+
+                if self.showWheelPaths:
+                    self.drawWheelsOnLine(samplePeriod, p1.angle, p2.angle, p2.deltaTime, 0, p1.x, p1.y, p2.x, p2.y)
+
                 self.pygame.draw.line(self.screen, (255, 0, 0), (points[0].pixelX, points[0].pixelY), (points[1].pixelX, points[1].pixelY), 2)
 
     def drawWheelsAtPoint(self, metersX, metersY, angle):
@@ -403,3 +409,44 @@ class Draw:
         self.pygame.draw.circle(self.screen, (255, 0, 255), fR, 1)
         self.pygame.draw.circle(self.screen, (255, 0, 255), bL, 1)
         self.pygame.draw.circle(self.screen, (255, 0, 255), bR, 1)
+
+    def drawWheelsOnLine(self, samplePeriod, theta1, theta2, difTime, v1, x1, y1, x2, y2):
+        pi = math.pi
+        time = 0
+
+        totalDist = Convert.getDist(x1, y1, x2, y2)
+        currentDist = 0
+
+        accel = ((2 * totalDist) / difTime ** 2) - ((2 * v1) / difTime)
+
+        drawTheta = math.atan2(y1 - y2, x1 - x2)
+
+        difTheta = theta2 - theta1
+        currentTheta = theta1
+        if theta1 > theta2:
+            difTheta = theta1 - theta2
+        else:
+            difTheta = theta2 - theta1
+        if difTheta > pi:
+            difTheta = (pi * 2) - difTheta
+
+        while time <= difTime:
+            currentDist = (v1 * time) + 0.5 * accel * (time ** 2)
+
+            if theta1 < theta2:
+                if abs(theta1 - theta2) < pi:
+                    currentTheta = theta1 + (difTheta * (time / difTime))
+                else:
+                    currentTheta = theta1 - (difTheta * (time / difTime))
+            else:
+                if abs(theta1 - theta2) < pi:
+                    currentTheta = theta1 - (difTheta * (time / difTime))
+                else:
+                    currentTheta = theta1 + (difTheta * (time / difTime))
+            currentTheta = currentTheta % (pi * 2)
+
+            point = list(Convert.getXY(currentDist, drawTheta, x1, y2))
+
+            self.drawWheelsAtPoint(point[0], point[1], currentTheta)
+
+            time += samplePeriod

@@ -30,3 +30,12 @@ def getPixelPos(point, fieldWidth, fieldHeight):
 
 def getDist(x1, y1, x2, y2):
     return math.sqrt( ( (x1 - x2) * (x1 - x2) ) + ( (y1 - y2) * (y1 - y2) ) )
+
+def getXY(r, theta, offsetX, offsetY):
+    x = offsetX + r * math.cos(theta)
+    y = offsetY + r * math.sin(theta)
+    return (x, y)
+
+def getTheta(x, y, offsetX, offsetY):
+    theta = (math.pi / 2) - math.atan2(x - offsetX, y - offsetY)
+    return theta
