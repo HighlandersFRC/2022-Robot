@@ -1,27 +1,33 @@
 import numpy as np  # numpy - manipulate the packet data returned by depthai
 import cv2  # opencv - display the video stream
 import depthai  # depthai - access the camera and its data packets
+import math
 
 pipeline = depthai.Pipeline()
 
 cam_rgb = pipeline.create(depthai.node.ColorCamera)
-cam_rgb.setPreviewSize(500, 500)
+cam_rgb.setPreviewSize(640, 400)
 
 xout_rgb = pipeline.create(depthai.node.XLinkOut)
 xout_rgb.setStreamName("rgb")
 cam_rgb.preview.link(xout_rgb.input)
 
+# xinSpatialCalcConfig = pipeline.createXLinkIn()
+# xinSpatialCalcConfig.setStreamName("spatialCalcConfig")
+
 controlIn = pipeline.create(depthai.node.XLinkIn)
 controlIn.setStreamName('control')
 controlIn.out.link(cam_rgb.inputControl)
 
-lowerH = 57
-upperH = 84
+# spatialLocationCalculator = pipeline.createSpatialLocationCalculator()
 
-lowerS = 222
+lowerH = 55
+upperH = 115
+
+lowerS = 150
 upperS = 255
 
-lowerV = 62
+lowerV = 170
 upperV = 255
 
 expTime = 2000
@@ -31,14 +37,15 @@ centerX = 0
 centerY = 0
 numLines = 0
 
-focal_length_in_pixels = 882.5
-distBetweenCameras = 2.95276
+focal_length_in_pixels = 640 * 0.5 / math.tan(71.9 * 0.5 * math.pi / 180)
+distBetweenCameras = 7.5
 
 def getMonoCamera(pipeline, isLeft):
     # Configure mono camera
     mono = pipeline.createMonoCamera()
     # Set Camera Resolution
     mono.setResolution(depthai.MonoCameraProperties.SensorResolution.THE_400_P)
+    # mono.setPreviewSize(400, 400)
     if isLeft:
         # Get left camera
         mono.setBoardSocket(depthai.CameraBoardSocket.LEFT)
@@ -47,14 +54,15 @@ def getMonoCamera(pipeline, isLeft):
         mono.setBoardSocket(depthai.CameraBoardSocket.RIGHT)
     return mono
 
-def getStereoPair(pipeline, monoleft, monoRight):
-    stereo = pipeline.createStereoDepth()
-    stereo.setLeftRightCheck(True)
+# def getStereoPair(pipeline, monoLeftCam, monoRightCam):
+#     stereo = pipeline.createStereoDepth()
+#     # stereo.setLeftRightCheck(True)
+#     stereo.setSubpixel(False)
 
-    monoLeft.out.link(stereo.left)
-    monoRight.out.link(stereo.right)
+#     monoLeftCam.out.link(stereo.left)
+#     monoRightCam.out.link(stereo.right)
 
-    return stereo
+#     return stereo
 
 def on_change(value):
     print(value)
@@ -66,43 +74,56 @@ def getFrame(queue):
   return frame.getCvFrame()
 
 # Set up left and right cameras
-monoLeft = getMonoCamera(pipeline, isLeft = True)
-monoRight = getMonoCamera(pipeline, isLeft = False)
+monoLeft = pipeline.createMonoCamera()
+monoRight = pipeline.createMonoCamera()
+stereo = pipeline.createStereoDepth()
 
-stereo = getStereoPair(pipeline, monoLeft, monoRight)
+stereo.setOutputDepth(True)
+stereo.setOutputRectified(False)
+stereo.setConfidenceThreshold(255)
+stereo.setLeftRightCheck(False)
+stereo.setSubpixel(True)
 
-# Set output Xlink for left camera
-xoutLeft = pipeline.createXLinkOut()
-xoutLeft.setStreamName("left")
+monoLeft.setResolution(depthai.MonoCameraProperties.SensorResolution.THE_400_P)
+monoLeft.setBoardSocket(depthai.CameraBoardSocket.LEFT)
+monoRight.setResolution(depthai.MonoCameraProperties.SensorResolution.THE_400_P)
+monoRight.setBoardSocket(depthai.CameraBoardSocket.RIGHT)
 
-# Set output Xlink for right camera
-xoutRight = pipeline.createXLinkOut()
-xoutRight.setStreamName("right")
+monoLeft.out.link(stereo.left)
+monoRight.out.link(stereo.right)
+
+spatialLocationCalculator = pipeline.createSpatialLocationCalculator()
+xoutSpatialData = pipeline.createXLinkOut()
+xinSpatialCalcConfig = pipeline.createXLinkIn()
 
 xoutDepth = pipeline.createXLinkOut()
 xoutDepth.setStreamName("depth")
 
-xoutDisp = pipeline.createXLinkOut()
-xoutDisp.setStreamName("disparity")
+spatialLocationCalculator.passthroughDepth.link(xoutDepth.input)
+stereo.depth.link(spatialLocationCalculator.inputDepth)
 
-stereo.disparity.link(xoutDisp.input)
+topLeft = depthai.Point2f(0.45, 0.45)
+bottomRight = depthai.Point2f(0.55, 0.55)
 
-# Attach cameras to output Xlink
-monoLeft.out.link(xoutLeft.input)
-monoRight.out.link(xoutRight.input)
+spatialLocationCalculator.setWaitForConfigInput(False)
+config = depthai.SpatialLocationCalculatorConfigData()
+config.depthThresholds.lowerThreshold = 100
+config.depthThresholds.upperThreshold = 10000
+config.roi = depthai.Rect(topLeft, bottomRight)
+spatialLocationCalculator.initialConfig.addROI(config)
+spatialLocationCalculator.out.link(xoutSpatialData.input)
+xinSpatialCalcConfig.out.link(spatialLocationCalculator.inputConfig)
+
+xoutSpatialData.setStreamName("spatialData")
+xinSpatialCalcConfig.setStreamName("spatialCalcConfig")
 
 with depthai.Device(pipeline) as device:
     q_rgb = device.getOutputQueue("rgb")
     frame = None
 
-    disparityQueue = device.getOutputQueue(name = "disparity", maxSize = 1, blocking = False)
-
-    disparityMultiplier = 255/(stereo.getMaxDisparity())
-
-    leftQueue = device.getOutputQueue(name="left", maxSize=1)
-    rightQueue = device.getOutputQueue(name="right", maxSize=1)
-
-    # cv2.namedWindow("Stereo Pair")
+    depthQueue = device.getOutputQueue("depth", maxSize=1, blocking=False)
+    spatialCalcQueue = device.getOutputQueue(name="spatialData", maxSize=1, blocking=False)
+    spatialCalcConfigInQueue = device.getInputQueue("spatialCalcConfig")
 
     cv2.namedWindow('HSV Tuner', cv2.WINDOW_AUTOSIZE)
     
@@ -113,24 +134,26 @@ with depthai.Device(pipeline) as device:
     cv2.createTrackbar('Lower V', "HSV Tuner", 0, 255, on_change)
     cv2.createTrackbar('Higher V', "HSV Tuner", 0, 255, on_change)
 
+    cv2.setTrackbarPos('Lower H', "HSV Tuner", lowerH)
+    cv2.setTrackbarPos('Higher H', "HSV Tuner", upperH)
+    cv2.setTrackbarPos('Lower S', "HSV Tuner", lowerS)
+    cv2.setTrackbarPos('Higher S', "HSV Tuner", upperS)
+    cv2.setTrackbarPos('Lower V', "HSV Tuner", lowerV)
+    cv2.setTrackbarPos('Higher V', "HSV Tuner", upperV)
+
     while True:
-        # print(lowerH)
+        controlQueue = device.getInputQueue('control')
+        ctrl = depthai.CameraControl()
+        ctrl.setManualExposure(expTime, sensIso)
+        controlQueue.send(ctrl)
 
-        # Get left frame
-        leftFrame = getFrame(leftQueue)
-        # Get right frame 
-        rightFrame = getFrame(rightQueue)
-
-        disparity = getFrame(disparityQueue)
-
-        disparity = (disparity * disparityMultiplier).astype(np.uint8)
-        distance = focal_length_in_pixels * distBetweenCameras/ disparity
-        print((distance))
-        disparity = cv2.applyColorMap(disparity, cv2.COLORMAP_JET)
-
-
-        # imOut = np.hstack((leftFrame, rightFrame))
-        imOut = np.uint8(leftFrame/2 + rightFrame/2)
+        inDepth = depthQueue.get() # blocking call, will wait until a new data has arrived
+        inDepthAvg = spatialCalcQueue.get() # blocking call, will wait until a new data has arrived
+        
+        depthFrame = inDepth.getFrame()
+        depthFrameColor = cv2.normalize(depthFrame, None, 255, 0, cv2.NORM_MINMAX, cv2.CV_8UC1)
+        depthFrameColor = cv2.equalizeHist(depthFrameColor)
+        depthFrameColor = cv2.applyColorMap(depthFrameColor, cv2.COLORMAP_JET)
 
         lowerH = cv2.getTrackbarPos('Lower H', "HSV Tuner")
         upperH = cv2.getTrackbarPos('Higher H', "HSV Tuner")
@@ -142,10 +165,6 @@ with depthai.Device(pipeline) as device:
         upperV = cv2.getTrackbarPos('Higher V', "HSV Tuner")
 
         in_rgb = q_rgb.tryGet()
-        controlQueue = device.getInputQueue('control')
-        ctrl = depthai.CameraControl()
-        ctrl.setManualExposure(expTime, sensIso)
-        controlQueue.send(ctrl)
         if in_rgb is not None:
             frame = in_rgb.getCvFrame()
         if frame is not None:
@@ -161,17 +180,21 @@ with depthai.Device(pipeline) as device:
 
             edges = cv2.Canny(mask, 75, 150)
 
-            lines = cv2.HoughLinesP(edges,1,np.pi/180,10)
+            lines = cv2.HoughLinesP(edges, 10, np.pi/180, 2)
 
             numLines = 0
 
             if lines is not None:
+                centerX = 0
+                centerY = 0
                 for i in range(0, len(lines)):
+                    # print(lines[i])
                     l = lines[i][0]
-                    cv2.line(frame, (l[0], l[1]), (l[2], l[3]), (0, 0, 255), 5, cv2.LINE_AA)
-                    numLines = numLines + 2
-                    centerX = centerX + l[0] + l[2]
-                    centerY = centerY + l[1] + l[3]
+                    # print("L1: " + str(l[0]) + "L2: " + str(l[2]))
+                    cv2.line(frame, (l[0], l[1]), (l[2], l[3]), (0, 0, 255), 7, cv2.LINE_AA)
+                    numLines = numLines + 1
+                    centerX = centerX + l[0]
+                    centerY = centerY + l[1]
 
             if numLines != 0:
                 centerX = centerX/numLines
@@ -180,11 +203,33 @@ with depthai.Device(pipeline) as device:
             centerX = int(centerX)
             centerY = int(centerY)
 
-            # print("CenterX: " + str(centerX) + " CenterY: " + str(centerY))
+            topLeft = depthai.Point2f((centerX/640) - 0.01, (centerY/400) - 0.01)
+            bottomRight = depthai.Point2f((centerX/640) + 0.01, (centerY/400) + 0.01)
 
-            cv2.circle(frame, (centerX, centerY), 15, (120, 255, 255))
+            config.roi = depthai.Rect(topLeft, bottomRight)
+            cfg = depthai.SpatialLocationCalculatorConfig()
+            cfg.addROI(config)
+            spatialCalcConfigInQueue.send(cfg)
 
-            cv2.imshow("Disparity", disparity)
+            angle = (centerX - 319.5) * (71.9/640)
+
+            color = (255, 255, 255)
+
+            if lines is not None:
+                spatialData = inDepthAvg.getSpatialLocations()
+                roi = spatialData[0].config.roi
+                roi = roi.denormalize(width=depthFrameColor.shape[1], height=depthFrameColor.shape[0])
+                xmin = int(roi.topLeft().x)
+                ymin = int(roi.topLeft().y)
+                xmax = int(roi.bottomRight().x)
+                ymax = int(roi.bottomRight().y)
+
+                cv2.circle(frame, (centerX, centerY), 3, color)
+                cv2.rectangle(depthFrameColor, (xmin, ymin), (xmax, ymax), color, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX)
+                print("Z: " + str((spatialData[0].spatialCoordinates.z)/25.4) + " X: " + str((spatialData[0].spatialCoordinates.x)) + " Y: " + str((spatialData[0].spatialCoordinates.y)))
+
+            # cv2.imshow("Disparity", disparity)
+            cv2.imshow("depth", depthFrameColor)
             cv2.imshow("mask", result)
             cv2.imshow("RGB", frame)
         if cv2.waitKey(1) == ord('q'):
