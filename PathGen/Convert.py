@@ -7,22 +7,23 @@ def degreesToRadians(degrees):
 def radiansToDegrees(radians):
     return radians * (180 / math.pi)
 
-def getFieldPos(mousePos, fieldWidth, fieldHeight):
+def getFieldPos(mousePos):
     mousePos = list(mousePos)
 
-    mousePos[0] -= 218 * (fieldWidth / 1600)
-    mousePos[1] = -1 * (mousePos[1] - (759 * (fieldHeight / 900)))
+    x = mousePos[0]
+    y = mousePos[1]
 
-    mousePos[0] = math.floor((mousePos[0] * (1600 / fieldWidth)) * (15.98295 / 1057) * 100) / 100
-    mousePos[1] = math.floor((mousePos[1] * (900 / fieldHeight)) * (15.98295 / 1057) * 100) / 100
+    x = (x - 150) * (16.4592 / 899)
+    y = (-1 * (y - 472)) * (16.4592 / 899)
 
-    return mousePos
 
-def getPixelPos(point, fieldWidth, fieldHeight):
+    return list((x, y))
+
+def getPixelPos(point):
     point = list(point)
 
-    pixelX = (point[0] / ((1600 / fieldWidth) * (15.98295 / 1057)) ) + 218 * (fieldWidth / 1600)
-    pixelY = -1 *(point[1] / ((900 / fieldHeight) * (15.98295 / 1057)) ) + 759 * (fieldHeight / 900)
+    pixelX = (point[0] / (16.4592 / 899)) + 150
+    pixelY = -1 * (point[1] / (16.4592 / 899)) + 472
 
     pixelPos = (pixelX, pixelY)
 
@@ -39,3 +40,7 @@ def getXY(r, theta, offsetX, offsetY):
 def getTheta(x, y, offsetX, offsetY):
     theta = (math.pi / 2) - math.atan2(x - offsetX, y - offsetY)
     return theta
+
+def round(num, places):
+    num = math.floor(num * (10 ** places)) / (10 ** places)
+    return num

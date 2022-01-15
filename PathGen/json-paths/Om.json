@@ -1,0 +1,36 @@
+[
+  {
+    "x": 11.40609744160178,
+    "y": 6.224836484983315,
+    "pixelX": 773.0,
+    "pixelY": 132.0,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 0.0,
+    "deltaTime": 0.0,
+    "interpolationRange": 0.0,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 0
+  },
+  {
+    "x": 14.243890545050055,
+    "y": 5.950211345939933,
+    "pixelX": 928.0,
+    "pixelY": 147.0,
+    "angle": 0.0,
+    "speed": 0.0,
+    "time": 2.0,
+    "deltaTime": 2.0,
+    "interpolationRange": 0.75,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "index": 1
+  }
+]

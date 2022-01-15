@@ -9,8 +9,8 @@ class Point:
     def __init__(self, x, y, fieldWidth, fieldHeight, angle, speed, time, deltaTime, interpolationRange, color):
         self.x = x
         self.y = y
-        self.pixelX = (x / ((1600 / fieldWidth) * (15.98295 / 1057)) ) + 218 * (fieldWidth / 1600)
-        self.pixelY = -1 *(y / ((900 / fieldHeight) * (15.98295 / 1057)) ) + 759 * (fieldHeight / 900)
+        self.pixelX = Convert.getPixelPos((x, y))[0]
+        self.pixelY = Convert.getPixelPos((x, y))[1]
         self.angle = angle
         self.speed = speed
         self.time = time
@@ -19,9 +19,9 @@ class Point:
         self.color = color
         self.index = len(points)
 
-    def updatePixelPos(self, fieldWidth, fieldHeight):
-        self.pixelX = (self.x / ((1600 / fieldWidth) * (15.98295 / 1057)) ) + 218 * (fieldWidth / 1600)
-        self.pixelY = -1 *(self.y / ((900 / fieldHeight) * (15.98295 / 1057)) ) + 759 * (fieldHeight / 900)
+    def updatePixelPos(self):
+        self.pixelX = Convert.getPixelPos((self.x, self.y))[0]
+        self.pixelY = Convert.getPixelPos((self.x, self.y))[1]
 
     def toJSON(self):
         return self.__dict__
@@ -48,7 +48,7 @@ def clicked(mousePos, fieldWidth, fieldHeight, pygame, selectedPoint, imgWidth, 
 def saveSelectedPoint(selectedPoint, fieldWidth, fieldHeight):
     selectedPoint.angle = selectedPoint.angle % 360
     points[selectedPoint.index] = selectedPoint
-    points[selectedPoint.index].updatePixelPos(fieldWidth, fieldHeight)
+    points[selectedPoint.index].updatePixelPos()
 
 def getPoints():
     return points

@@ -9,7 +9,7 @@ from datetime import datetime
 
 pygame.init()
 
-screenWidth = 1200
+screenWidth = 1550
 screenHeight = 500
 
 selectedValue = 0
@@ -19,7 +19,7 @@ editorString2 = ''
 fileName = "Path-1"
 saveName = "Find Save File"
 
-backgroundImg = pygame.image.load("Images/field2.png")
+backgroundImg = pygame.image.load("Images/RapidReactField.png")
 newScreenWidth = ((screenHeight / int(backgroundImg.get_height())) * backgroundImg.get_width())
 
 fieldWidth = newScreenWidth
@@ -42,7 +42,7 @@ while running:
             running = False
         
         if event.type == pygame.MOUSEBUTTONUP:
-            selectedPoint = Point.clicked(Convert.getFieldPos(pygame.mouse.get_pos(), fieldWidth, fieldHeight), fieldWidth, fieldHeight, pygame, selectedPoint, newScreenWidth, draw)
+            selectedPoint = Point.clicked(Convert.getFieldPos(pygame.mouse.get_pos()), fieldWidth, fieldHeight, pygame, selectedPoint, newScreenWidth, draw)
             if selectedPoint != None:
                 selectedPoint = draw.clickedInfo(selectedPoint, fileName)
             draw.uploadButtons(fileName)
