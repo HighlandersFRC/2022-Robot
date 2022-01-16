@@ -151,12 +151,16 @@ public class Drive extends SubsystemBase {
         double originalX = -OI.getDriverLeftY();
         double originalY = -OI.getDriverLeftX();
 
+        System.out.println("Original X: " + originalX);
+        System.out.println("Original Y: " + originalY);
+
         if(Math.abs(originalX) < 0.05) {
             originalX = 0;
         }
         if(Math.abs(originalY) < 0.05) {
             originalY = 0;
         }
+
 
         double turn = -OI.getDriverRightX() * (Constants.TOP_SPEED)/(Constants.ROBOT_RADIUS);
         double navxOffset = peripherals.getNavxAngle();
@@ -182,7 +186,7 @@ public class Drive extends SubsystemBase {
 
         rightFront.postDriveMotorTics();
 
-        System.out.println(m_odometry.getPoseMeters());
+        // System.out.println(m_odometry.getPoseMeters());
         // System.out.println("Rate: " + peripherals.getNavxRate());
     }
 

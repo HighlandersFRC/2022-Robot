@@ -141,6 +141,9 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
+    if(currentTime > pathPointsJSON.getJSONObject(pathPointsJSON.length()).getDouble("time")){
+      return true;
+    }
     return false;
   }
 }
