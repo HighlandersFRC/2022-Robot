@@ -351,16 +351,39 @@ class Draw:
                 v1 = Convert.getDist(p1.x, p1.y, interpPoint1Meters[0], interpPoint1Meters[1]) / (t1 - p1.time)
                 v2 = Convert.getDist(p3.x, p3.y, interpPoint2Meters[0], interpPoint2Meters[1]) / (p3.time - t2)
 
-                t1Theta = ((p2.angle - p1.angle) % (pi * 2))
-                t2Theta = ((p3.angle - p2.angle) % (pi * 2))
+                if p1.angle >= p2.angle:
+                    op2 = ((pi * 2) - (p1.angle - p2.angle))
+                    op1 = (p1.angle - p2.angle)
+                else:
+                    op1 = ((pi * 2) - (p2.angle - p1.angle))
+                    op2 = (p2.angle - p1.angle)
 
-                if t1Theta > pi:
-                    t1Theta = (pi * 2) - t1Theta
-                if t2Theta > pi:
-                    t2Theta = (pi * 2) - t2Theta
+                if p2.angle >= p3.angle:
+                    op3 = ((pi * 2) - (p2.angle - p3.angle))
+                    op4 = (p2.angle - p3.angle)
+                else:
+                    op3 = ((pi * 2) - (p3.angle - p2.angle))
+                    op4 = (p3.angle - p2.angle)
 
-                t1Theta *= ((t1 - p1.time) / p2.deltaTime)
-                t2Theta *= ((t2 - p2.time) / p3.deltaTime)
+                if op1 <= op2:
+                    sine1 = -1
+                    difWheelTheta1 = op1
+                else:
+                    sine1 = 1
+                    difWheelTheta1 = op2
+
+                if op3 <= op4:
+                    sine2 = 1
+                    difWheelTheta2 = op3
+                else:
+                    sine2 = -1
+                    difWheelTheta2 = op4
+
+                t1Theta = (p1.angle + ((difWheelTheta1 * interpFraction) * sine1)) % (pi * 2)
+                t2Theta = (p2.angle + ((difWheelTheta2 * (1 - interpFraction)) * sine2)) % (pi * 2)
+
+                # print('1: ' + str(difWheelTheta1))
+                # print('2: ' + str(difWheelTheta2))
 
                 time = t1
                 difTime = t2 - t1
@@ -374,40 +397,13 @@ class Draw:
                 if difTheta > pi:
                     difTheta = (pi * 2) - difTheta
 
-                difWheelTheta1 = abs(t1Theta - p2.angle)
-                difWheelTheta2 = abs(p2.angle - t2Theta)
-
-                if difWheelTheta1 > pi:
-                    difWheelTheta1 = (pi * 2) - difWheelTheta1
-                if difWheelTheta2 > pi:
-                    difWheelTheta2 = (pi * 2) - difWheelTheta2
-
-                
                 while time <= t2 and time >= t1:
                     currentDist = ((neededAccel * (time - t1) + v1) * (time - t1)) * (interpDistMeters / endDist)
 
                     if time <= p2.time:
-                        if p2.angle < t2Theta:
-                            if abs(t1Theta - p2.angle) < pi:
-                                wheelTheta = t1Theta + (difWheelTheta1 * ((time - t1) / (p2.time - t1)))
-                            else:
-                                wheelTheta = t1Theta - (difWheelTheta1 * ((time - t1) / (p2.time - t1)))
-                        else:
-                            if abs(t1Theta - p2.angle) < pi:
-                                wheelTheta = t1Theta - (difWheelTheta1 * ((time - t1) / (p2.time - t1)))
-                            else:
-                                wheelTheta = t1Theta + (difWheelTheta1 * ((time - t1) / (p2.time - t1)))
+                        wheelTheta = (p1.angle + ((difWheelTheta1 * ((time - p1.time) / (p2.deltaTime))) * sine1)) % (pi * 2)
                     else:
-                        if p2.angle < t2Theta:
-                            if abs(p2.angle - t2Theta) < pi:
-                                wheelTheta = p2.angle + (difWheelTheta2 * ((time - p2.time) / (t2 - p2.time)))
-                            else:
-                                wheelTheta = p2.angle - (difWheelTheta2 * ((time - p2.time) / (t2 - p2.time)))
-                        else:
-                            if abs(p2.angle - t2Theta) < pi:
-                                wheelTheta = p2.angle - (difWheelTheta2 * ((time - p2.time) / (t2 - p2.time)))
-                            else:
-                                wheelTheta = p2.angle + (difWheelTheta2 * ((time - p2.time) / (t2 - p2.time)))
+                        wheelTheta = (p2.angle + ((difWheelTheta2 * ((time - p2.time) / (p3.deltaTime))) * sine2)) % (pi * 2)
 
                     if theta1 < targetTheta:
                         if abs(theta1 - targetTheta) < pi:
@@ -428,6 +424,9 @@ class Draw:
                     self.pygame.draw.circle(self.screen, (0, 255, 0), point, 1)
                     if self.showWheelPaths:
                         self.drawWheelsAtPoint(x, y, wheelTheta)
+
+                    # print('wheelTheta: ' + str(wheelTheta))
+
                     time += samplePeriod
 
                 # print('angle1: ' + str(p1.angle))
@@ -436,14 +435,29 @@ class Draw:
                 # print('t2Theta: ' + str(t2Theta))
                 # print('angle3: ' + str(p3.angle))
                 
+                
                 if p1.index >= 1:
+
+                    if prevT2Theta >= t1Theta:
+                        op5 = ((pi * 2) - (prevT2Theta - t1Theta))
+                        op6 = (prevT2Theta - t1Theta)
+                    else:
+                        op6 = ((pi * 2) - (t1Theta - prevT2Theta))
+                        op5 = (t1Theta - prevT2Theta)
+
+                    if op5 <= op6:
+                        sine3 = 1
+                    else:
+                        sine3 = -1
+                        
+
                     if self.showWheelPaths:
-                        self.drawWheelsOnLine(samplePeriod, prevT2Theta, t1Theta, (t1 - prevT2), prevV2, prevInterpPoint2Meters[0], prevInterpPoint2Meters[1], interpPoint1Meters[0], interpPoint1Meters[1])
+                        self.drawWheelsOnLine(samplePeriod, prevT2Theta, t1Theta, (t1 - prevT2), prevV2, prevInterpPoint2Meters[0], prevInterpPoint2Meters[1], interpPoint1Meters[0], interpPoint1Meters[1], sine3)
 
                 if p1.index == 0:
 
                     if self.showWheelPaths:
-                        self.drawWheelsOnLine(samplePeriod, p1.angle, t1Theta, (t1 - p1.time), 0, p1.x, p1.y, interpPoint1Meters[0], interpPoint1Meters[1])
+                        self.drawWheelsOnLine(samplePeriod, p1.angle, t1Theta, (t1 - p1.time), 0, p1.x, p1.y, interpPoint1Meters[0], interpPoint1Meters[1], sine1)
 
                     self.pygame.draw.line(self.screen, (255, 0, 0), (points[0].pixelX, points[0].pixelY), ((p1.pixelX + p2.pixelX) / 2, (p1.pixelY + p2.pixelY) / 2), 2)
                     
@@ -451,7 +465,7 @@ class Draw:
                 if p3.index == len(points) - 1:
 
                     if self.showWheelPaths:
-                       self.drawWheelsOnLine(samplePeriod, t2Theta, p3.angle, p3.deltaTime - (t2 - p2.time), v2, interpPoint2Meters[0], interpPoint2Meters[1], p3.x, p3.y)
+                       self.drawWheelsOnLine(samplePeriod, t2Theta, p3.angle, p3.deltaTime - (t2 - p2.time), v2, interpPoint2Meters[0], interpPoint2Meters[1], p3.x, p3.y, sine2)
 
                     self.pygame.draw.line(self.screen, (255, 0, 0), (points[-1].pixelX, points[-1].pixelY), ((p3.pixelX + p2.pixelX) / 2, (p3.pixelY + p2.pixelY) / 2), 2)
 
@@ -468,14 +482,14 @@ class Draw:
                 p2 = points[1]
 
                 if self.showWheelPaths:
-                    self.drawWheelsOnLine(samplePeriod, p1.angle, p2.angle, p2.deltaTime, 0, p1.x, p1.y, p2.x, p2.y)
+                    self.drawWheelsOnLine(samplePeriod, p1.angle, p2.angle, p2.deltaTime, 0, p1.x, p1.y, p2.x, p2.y, 1)
 
                 self.pygame.draw.line(self.screen, (255, 0, 0), (points[0].pixelX, points[0].pixelY), (points[1].pixelX, points[1].pixelY), 2)
 
     def drawWheelsAtPoint(self, metersX, metersY, angle):
         pi = math.pi
-        #distM = 0.39513
-        distM = 1
+        distM = 0.39513
+        #distM = 1
         fLAngle = ((3 * pi) / 4) + angle
         fRAngle = (pi / 4) + angle
         bLAngle = ((5 * pi) / 4) + angle
@@ -487,11 +501,11 @@ class Draw:
         bR = Convert.getPixelPos([metersX + distM * math.cos(bRAngle), metersY + distM * math.sin(bRAngle)])
 
         self.pygame.draw.circle(self.screen, (255, 0, 255), fL, 1)
-        # self.pygame.draw.circle(self.screen, (255, 0, 255), fR, 1)
-        # self.pygame.draw.circle(self.screen, (255, 0, 255), bL, 1)
-        # self.pygame.draw.circle(self.screen, (255, 0, 255), bR, 1)
+        self.pygame.draw.circle(self.screen, (255, 0, 255), fR, 1)
+        self.pygame.draw.circle(self.screen, (255, 0, 255), bL, 1)
+        self.pygame.draw.circle(self.screen, (255, 0, 255), bR, 1)
 
-    def drawWheelsOnLine(self, samplePeriod, theta1, theta2, difTime, v1, x1, y1, x2, y2):
+    def drawWheelsOnLine(self, samplePeriod, theta1, theta2, difTime, v1, x1, y1, x2, y2, sine):
         pi = math.pi
         time = 0
 
@@ -502,29 +516,12 @@ class Draw:
 
         drawTheta = math.atan2(y2 - y1, x2 - x1)
 
-        difTheta = theta2 - theta1
-        currentTheta = theta1
-        if theta1 > theta2:
-            difTheta = theta1 - theta2
-        else:
-            difTheta = theta2 - theta1
-        if difTheta > pi:
-            difTheta = (pi * 2) - difTheta
+        difTheta = Convert.getThetaDif(theta1, theta2)
 
         while time <= difTime:
             currentDist = (v1 * time) + 0.5 * accel * (time ** 2)
 
-            if theta1 < theta2:
-                if abs(theta1 - theta2) < pi:
-                    currentTheta = theta1 + (difTheta * (time / difTime))
-                else:
-                    currentTheta = theta1 - (difTheta * (time / difTime))
-            else:
-                if abs(theta1 - theta2) < pi:
-                    currentTheta = theta1 - (difTheta * (time / difTime))
-                else:
-                    currentTheta = theta1 + (difTheta * (time / difTime))
-            currentTheta = currentTheta % (pi * 2)
+            currentTheta = (theta1 + ((difTheta * ((time) / (difTime))) * sine)) % (pi * 2)
 
             point = list(Convert.getXY(currentDist, drawTheta, x1, y1))
 

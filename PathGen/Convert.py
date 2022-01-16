@@ -44,3 +44,9 @@ def getTheta(x, y, offsetX, offsetY):
 def round(num, places):
     num = math.floor(num * (10 ** places)) / (10 ** places)
     return num
+
+def getThetaDif(theta1, theta2):
+    difTheta = (theta1 - theta2) % (math.pi * 2)
+    if difTheta > math.pi:
+        difTheta = (math.pi * 2) - difTheta
+    return difTheta
