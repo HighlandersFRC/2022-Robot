@@ -2,8 +2,75 @@ import numpy as np  # numpy - manipulate the packet data returned by depthai
 import cv2  # opencv - display the video stream
 import depthai  # depthai - access the camera and its data packets
 import math
+from paho.mqtt import client as mqtt_client
+
+broker = '172.250.250.61'
+port = 1883
+pubTopic = "/sensors/camera"
+subTopic = "/robot/camera"
+client_id = "44H99"
+
+sub_client_id = "99H44"
+
+def connect_mqtt():
+    def on_connect(client, userdata, flags, rc):
+        if rc == 0:
+            print("Connected to MQTT Broker!")
+        else:
+            print("Failed to connect, return code %d\n", rc)
+    # Set Connecting Client ID
+    client = mqtt_client.Client(client_id)
+    client.username_pw_set("4499", "4499")
+    client.on_connect = on_connect
+    client.connect(broker, port)
+    return client
+
+def connect_mqttSub():
+    def on_connect(client, userdata, flags, rc):
+        if rc == 0:
+            print("Connected to MQTT Broker!")
+        else:
+            print("Failed to connect, return code %d\n", rc)
+    # Set Connecting Client ID
+    client = mqtt_client.Client(sub_client_id)
+    client.username_pw_set("4499", "4499")
+    client.on_connect = on_connect
+    client.connect(broker)
+    return client
+
+def publish(client, msg):
+    msg_count = 0
+    result = client.publish(pubTopic, msg)
+    # result: [0, 1]
+    status = result[0]
+    if status == 0:
+        print(f"Send `{msg}` to Topic `{pubTopic}`")
+    else:
+        print(f"Failed to send message to Topic {pubTopic}")
+    msg_count += 1
+
+def subscribe(client):
+    def on_message(client, userdata, msg):
+        print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
+
+    # print("Listening")
+    client.subscribe(subTopic, 2)
+    client.on_message = on_message
 
 pipeline = depthai.Pipeline()
+
+imu = pipeline.create(depthai.node.IMU)
+xlinkOut = pipeline.create(depthai.node.XLinkOut)
+
+xlinkOut.setStreamName("imu")
+
+imu.enableIMUSensor(depthai.IMUSensor.ROTATION_VECTOR, 400)
+
+imu.setBatchReportThreshold(1)
+
+imu.setMaxBatchReports(10)
+
+imu.out.link(xlinkOut.input)
 
 cam_rgb = pipeline.create(depthai.node.ColorCamera)
 cam_rgb.setPreviewSize(640, 400)
@@ -21,14 +88,14 @@ controlIn.out.link(cam_rgb.inputControl)
 
 # spatialLocationCalculator = pipeline.createSpatialLocationCalculator()
 
-lowerH = 55
-upperH = 115
+lowerH = 35
+upperH = 82
 
-lowerS = 150
+lowerS = 173
 upperS = 255
 
-lowerV = 170
-upperV = 255
+lowerV = 63
+upperV = 245
 
 expTime = 2000
 sensIso = 200
@@ -121,6 +188,16 @@ with depthai.Device(pipeline) as device:
     q_rgb = device.getOutputQueue("rgb")
     frame = None
 
+    client = connect_mqtt()
+    subClient = connect_mqttSub()
+
+    subClient.loop_start()
+
+
+    imuQueue = device.getOutputQueue(name="imu", maxSize=50, blocking = False)
+
+    baseTs = None
+
     depthQueue = device.getOutputQueue("depth", maxSize=1, blocking=False)
     spatialCalcQueue = device.getOutputQueue(name="spatialData", maxSize=1, blocking=False)
     spatialCalcConfigInQueue = device.getInputQueue("spatialCalcConfig")
@@ -146,6 +223,41 @@ with depthai.Device(pipeline) as device:
         ctrl = depthai.CameraControl()
         ctrl.setManualExposure(expTime, sensIso)
         controlQueue.send(ctrl)
+
+        imuData = imuQueue.get()
+
+        imuPackets = imuData.packets
+
+        for imuPacket in imuPackets:
+            rVvalues = imuPacket.rotationVector
+
+            rvTs = rVvalues.timestamp.get()
+
+            if baseTs is None:
+                baseTs = rvTs
+            rvTs = rvTs - baseTs
+
+            imuF = "{:.06f}"
+            tsF = "{:.03f}"
+
+           # print(f"Quaternion: i: {imuF.format(rVvalues.i)} j: {imuF.format(rVvalues.j)}" f"k: {imuF.format(rVvalues.k)} real: {imuF.format(rVvalues.real)}")
+
+        iVal = float(imuF.format(rVvalues.i))
+        jVal = float(imuF.format(rVvalues.j))
+        kVal = float(imuF.format(rVvalues.k))
+        realVal = float(imuF.format(rVvalues.real))
+
+        cameraRollAngle = 2 * math.acos(realVal)
+
+        cameraXVector = (iVal/(math.sin(cameraRollAngle/2)))
+        cameraYVector = (jVal/(math.sin(cameraRollAngle/2)))
+        cameraZVector = (kVal/(math.sin(cameraRollAngle/2)))
+
+        camAngleToTarget = 2 * math.degrees(math.atan((cameraZVector)/(math.sqrt((cameraXVector ** 2) + (cameraYVector ** 2)))))
+
+        # print("AngleToTarget: " + str(camAngleToTarget) + " Accuracy: " + imuF.format(rVvalues.accuracy))
+
+        # print("I: " + str(iVal) + " J: " + str(jVal) + " K: " + str(kVal) + " R: " + str(realVal))
 
         inDepth = depthQueue.get() # blocking call, will wait until a new data has arrived
         inDepthAvg = spatialCalcQueue.get() # blocking call, will wait until a new data has arrived
@@ -226,7 +338,11 @@ with depthai.Device(pipeline) as device:
 
                 cv2.circle(frame, (centerX, centerY), 3, color)
                 cv2.rectangle(depthFrameColor, (xmin, ymin), (xmax, ymax), color, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX)
-                print("Z: " + str((spatialData[0].spatialCoordinates.z)/25.4) + " X: " + str((spatialData[0].spatialCoordinates.x)) + " Y: " + str((spatialData[0].spatialCoordinates.y)))
+               # print("Z: " + str((spatialData[0].spatialCoordinates.z)/25.4) + " X: " + str((spatialData[0].spatialCoordinates.x)) + " Y: " + str((spatialData[0].spatialCoordinates.y)))
+            
+            publish(client, "The beatings will continue until morale improves")
+            subscribe(subClient)
+            # client.loop_forever()
 
             # cv2.imshow("Disparity", disparity)
             cv2.imshow("depth", depthFrameColor)
