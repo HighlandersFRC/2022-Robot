@@ -129,6 +129,7 @@ public class Drive extends SubsystemBase {
     }
 
     public void autoInit(JSONArray pathPoints) {
+        peripherals.setNavxAngle(Math.toDegrees(pathPoints.getJSONObject(0).getDouble("angle")));
         m_odometry.resetPosition(new Pose2d(new Translation2d(pathPoints.getJSONObject(0).getDouble("x"), pathPoints.getJSONObject(0).getDouble("y")), new Rotation2d()), new Rotation2d());
     }
 

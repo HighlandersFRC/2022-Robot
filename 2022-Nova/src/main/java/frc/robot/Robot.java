@@ -8,6 +8,8 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.commands.ContinuousAccelerationInterpolation;
 import frc.robot.commands.DriveForward;
 import frc.robot.subsystems.Drive;
+import frc.robot.subsystems.MqttPublish;
+import frc.robot.subsystems.MqttSubscribe;
 import frc.robot.subsystems.Peripherals;
 
 import java.io.BufferedWriter;
@@ -30,6 +32,8 @@ public class Robot extends TimedRobot {
 
   File pathingFile;
   String pathString;
+  double angle;
+  boolean connection;
 
   JSONArray pathJSON;
 
@@ -37,6 +41,12 @@ public class Robot extends TimedRobot {
 
   private final Peripherals peripherals = new Peripherals();
   private Drive drive = new Drive(peripherals);
+  private final String subCameraTopic = "/sensors/camera";
+  private final String pubCameraTopic = "/robot/camera";
+
+  private MqttPublish publish = new MqttPublish();
+  private MqttSubscribe subscribe = new MqttSubscribe();
+
 
   /**
    * This function is run when the robot is first started up and should be used
@@ -46,6 +56,8 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     drive.init();
     peripherals.init();
+
+    subscribe.subscribe(subCameraTopic);
     m_robotContainer = new RobotContainer();
 
     try {
@@ -90,7 +102,7 @@ public class Robot extends TimedRobot {
     drive.autoInit(pathJSON);
     peripherals.init();
     testPath = new ContinuousAccelerationInterpolation(drive, pathJSON);
-    testPath.schedule();
+    //testPath.schedule();
   }
 
   /** This function is called periodically during autonomous. */

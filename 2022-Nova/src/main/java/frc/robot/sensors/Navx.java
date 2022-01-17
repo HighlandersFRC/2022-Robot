@@ -84,5 +84,10 @@ public class Navx {
   public double getAngleRate() {
       return (imu.getRate());
   }
+
+  public void setNavxAngle(double angle){
+      originalAngle -= angle;
+
+  }
   
 }
