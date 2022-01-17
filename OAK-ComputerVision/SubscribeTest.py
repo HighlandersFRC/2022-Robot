@@ -1,8 +1,8 @@
 from paho.mqtt import client as mqtt_client
 
-broker = '172.250.250.61'
+broker = '10.44.99.11'
 port = 1883
-topic = "/python/mqtt"
+topic = "/sensors/camera"
 client_id = "99H44"
 
 def connect_mqtt():
@@ -22,7 +22,7 @@ def subscribe(client):
     def on_message(client, userdata, msg):
         print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
 
-    print("Listening")
+    # print("Listening")
     client.subscribe(topic, 2)
     client.on_message = on_message    
 
@@ -32,3 +32,5 @@ client.loop_start()
 
 while(True):
     subscribe(client)
+
+print("Im done")

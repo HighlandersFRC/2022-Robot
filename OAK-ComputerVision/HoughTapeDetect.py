@@ -4,7 +4,7 @@ import depthai  # depthai - access the camera and its data packets
 import math
 from paho.mqtt import client as mqtt_client
 
-broker = '172.250.250.61'
+broker = '10.44.99.11'
 port = 1883
 pubTopic = "/sensors/camera"
 subTopic = "/robot/camera"
@@ -18,20 +18,20 @@ def connect_mqtt():
             print("Connected to MQTT Broker!")
         else:
             print("Failed to connect, return code %d\n", rc)
-    # Set Connecting Client ID
-    client = mqtt_client.Client(client_id)
-    client.username_pw_set("4499", "4499")
-    client.on_connect = on_connect
-    client.connect(broker, port)
+        # Set Connecting Client ID
+        client = mqtt_client.Client(client_id)
+        client.username_pw_set("4499", "4499")
+        client.on_connect = on_connect
+        client.connect(broker, port)
     return client
 
 def connect_mqttSub():
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
-            print("Connected to MQTT Broker!")
+           print("Connected to MQTT Broker!")
         else:
-            print("Failed to connect, return code %d\n", rc)
-    # Set Connecting Client ID
+           print("Failed to connect, return code %d\n", rc)
+        #Set Connecting Client ID
     client = mqtt_client.Client(sub_client_id)
     client.username_pw_set("4499", "4499")
     client.on_connect = on_connect
@@ -114,31 +114,31 @@ def getMonoCamera(pipeline, isLeft):
     mono.setResolution(depthai.MonoCameraProperties.SensorResolution.THE_400_P)
     # mono.setPreviewSize(400, 400)
     if isLeft:
-        # Get left camera
+    # Get left camera
         mono.setBoardSocket(depthai.CameraBoardSocket.LEFT)
     else :
-        # Get right camera
+    # Get right camera
         mono.setBoardSocket(depthai.CameraBoardSocket.RIGHT)
     return mono
 
-# def getStereoPair(pipeline, monoLeftCam, monoRightCam):
-#     stereo = pipeline.createStereoDepth()
-#     # stereo.setLeftRightCheck(True)
-#     stereo.setSubpixel(False)
+    # def getStereoPair(pipeline, monoLeftCam, monoRightCam):
+    #     stereo = pipeline.createStereoDepth()
+    #     # stereo.setLeftRightCheck(True)
+    #     stereo.setSubpixel(False)
 
-#     monoLeftCam.out.link(stereo.left)
-#     monoRightCam.out.link(stereo.right)
+    #     monoLeftCam.out.link(stereo.left)
+    #     monoRightCam.out.link(stereo.right)
 
-#     return stereo
+    #     return stereo
 
 def on_change(value):
     print(value)
 
 def getFrame(queue):
-  # Get frame from queue
-  frame = queue.get()
-  # Convert frame to OpenCV format and return
-  return frame.getCvFrame()
+    # Get frame from queue
+    frame = queue.get()
+    # Convert frame to OpenCV format and return
+    return frame.getCvFrame()
 
 # Set up left and right cameras
 monoLeft = pipeline.createMonoCamera()
@@ -202,21 +202,21 @@ with depthai.Device(pipeline) as device:
     spatialCalcQueue = device.getOutputQueue(name="spatialData", maxSize=1, blocking=False)
     spatialCalcConfigInQueue = device.getInputQueue("spatialCalcConfig")
 
-    cv2.namedWindow('HSV Tuner', cv2.WINDOW_AUTOSIZE)
-    
-    cv2.createTrackbar('Lower H', "HSV Tuner", 0, 255, on_change)
-    cv2.createTrackbar('Higher H', "HSV Tuner", 0, 255, on_change)
-    cv2.createTrackbar('Lower S', "HSV Tuner", 0, 255, on_change)
-    cv2.createTrackbar('Higher S', "HSV Tuner", 0, 255, on_change)
-    cv2.createTrackbar('Lower V', "HSV Tuner", 0, 255, on_change)
-    cv2.createTrackbar('Higher V', "HSV Tuner", 0, 255, on_change)
+    # cv2.namedWindow('HSV Tuner', cv2.WINDOW_AUTOSIZE)
 
-    cv2.setTrackbarPos('Lower H', "HSV Tuner", lowerH)
-    cv2.setTrackbarPos('Higher H', "HSV Tuner", upperH)
-    cv2.setTrackbarPos('Lower S', "HSV Tuner", lowerS)
-    cv2.setTrackbarPos('Higher S', "HSV Tuner", upperS)
-    cv2.setTrackbarPos('Lower V', "HSV Tuner", lowerV)
-    cv2.setTrackbarPos('Higher V', "HSV Tuner", upperV)
+    # cv2.createTrackbar('Lower H', "HSV Tuner", 0, 255, on_change)
+    # cv2.createTrackbar('Higher H', "HSV Tuner", 0, 255, on_change)
+    # cv2.createTrackbar('Lower S', "HSV Tuner", 0, 255, on_change)
+    # cv2.createTrackbar('Higher S', "HSV Tuner", 0, 255, on_change)
+    # cv2.createTrackbar('Lower V', "HSV Tuner", 0, 255, on_change)
+    # cv2.createTrackbar('Higher V', "HSV Tuner", 0, 255, on_change)
+
+    # cv2.setTrackbarPos('Lower H', "HSV Tuner", lowerH)
+    # cv2.setTrackbarPos('Higher H', "HSV Tuner", upperH)
+    # cv2.setTrackbarPos('Lower S', "HSV Tuner", lowerS)
+    # cv2.setTrackbarPos('Higher S', "HSV Tuner", upperS)
+    # cv2.setTrackbarPos('Lower V', "HSV Tuner", lowerV)
+    # cv2.setTrackbarPos('Higher V', "HSV Tuner", upperV)
 
     while True:
         controlQueue = device.getInputQueue('control')
@@ -240,7 +240,7 @@ with depthai.Device(pipeline) as device:
             imuF = "{:.06f}"
             tsF = "{:.03f}"
 
-           # print(f"Quaternion: i: {imuF.format(rVvalues.i)} j: {imuF.format(rVvalues.j)}" f"k: {imuF.format(rVvalues.k)} real: {imuF.format(rVvalues.real)}")
+            # print(f"Quaternion: i: {imuF.format(rVvalues.i)} j: {imuF.format(rVvalues.j)}" f"k: {imuF.format(rVvalues.k)} real: {imuF.format(rVvalues.real)}")
 
         iVal = float(imuF.format(rVvalues.i))
         jVal = float(imuF.format(rVvalues.j))
@@ -261,20 +261,20 @@ with depthai.Device(pipeline) as device:
 
         inDepth = depthQueue.get() # blocking call, will wait until a new data has arrived
         inDepthAvg = spatialCalcQueue.get() # blocking call, will wait until a new data has arrived
-        
+
         depthFrame = inDepth.getFrame()
         depthFrameColor = cv2.normalize(depthFrame, None, 255, 0, cv2.NORM_MINMAX, cv2.CV_8UC1)
         depthFrameColor = cv2.equalizeHist(depthFrameColor)
         depthFrameColor = cv2.applyColorMap(depthFrameColor, cv2.COLORMAP_JET)
 
-        lowerH = cv2.getTrackbarPos('Lower H', "HSV Tuner")
-        upperH = cv2.getTrackbarPos('Higher H', "HSV Tuner")
+        # lowerH = cv2.getTrackbarPos('Lower H', "HSV Tuner")
+        # upperH = cv2.getTrackbarPos('Higher H', "HSV Tuner")
 
-        lowerS = cv2.getTrackbarPos('Lower S', "HSV Tuner")
-        upperS = cv2.getTrackbarPos('Higher S', "HSV Tuner")
+        # lowerS = cv2.getTrackbarPos('Lower S', "HSV Tuner")
+        # upperS = cv2.getTrackbarPos('Higher S', "HSV Tuner")
 
-        lowerV = cv2.getTrackbarPos('Lower V', "HSV Tuner")
-        upperV = cv2.getTrackbarPos('Higher V', "HSV Tuner")
+        # lowerV = cv2.getTrackbarPos('Lower V', "HSV Tuner")
+        # upperV = cv2.getTrackbarPos('Higher V', "HSV Tuner")
 
         in_rgb = q_rgb.tryGet()
         if in_rgb is not None:
@@ -338,15 +338,18 @@ with depthai.Device(pipeline) as device:
 
                 cv2.circle(frame, (centerX, centerY), 3, color)
                 cv2.rectangle(depthFrameColor, (xmin, ymin), (xmax, ymax), color, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX)
-               # print("Z: " + str((spatialData[0].spatialCoordinates.z)/25.4) + " X: " + str((spatialData[0].spatialCoordinates.x)) + " Y: " + str((spatialData[0].spatialCoordinates.y)))
+                publish(client, str(angle))
+            # print("Z: " + str((spatialData[0].spatialCoordinates.z)/25.4) + " X: " + str((spatialData[0].spatialCoordinates.x)) + " Y: " + str((spatialData[0].spatialCoordinates.y)))
             
-            publish(client, "The beatings will continue until morale improves")
+            # publish(client, str(angle))
             subscribe(subClient)
             # client.loop_forever()
 
+            # print("Running")
+
             # cv2.imshow("Disparity", disparity)
-            cv2.imshow("depth", depthFrameColor)
-            cv2.imshow("mask", result)
-            cv2.imshow("RGB", frame)
+            # cv2.imshow("depth", depthFrameColor)
+            # cv2.imshow("mask", result)
+            # cv2.imshow("RGB", frame)
         if cv2.waitKey(1) == ord('q'):
             break

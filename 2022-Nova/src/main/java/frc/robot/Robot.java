@@ -39,8 +39,12 @@ public class Robot extends TimedRobot {
 
   private final Peripherals peripherals = new Peripherals();
   private Drive drive = new Drive(peripherals);
+  private final String subCameraTopic = "/sensors/camera";
+  private final String pubCameraTopic = "/robot/camera";
+
   private MqttPublish publish = new MqttPublish();
   private MqttSubscribe subscribe = new MqttSubscribe();
+
 
   /**
    * This function is run when the robot is first started up and should be used
@@ -50,6 +54,9 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     drive.init();
     peripherals.init();
+
+    // publish.publish(pubCameraTopic);
+    subscribe.subscribe(subCameraTopic);
     m_robotContainer = new RobotContainer();
 
     try {
@@ -66,6 +73,8 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {
     SmartDashboard.putNumber("Navx Value", peripherals.getNavxAngle());
     CommandScheduler.getInstance().run();
+
+    
       
     }
   
@@ -96,7 +105,7 @@ public class Robot extends TimedRobot {
     drive.autoInit(pathJSON);
     peripherals.init();
     testPath = new ContinuousAccelerationInterpolation(drive, pathJSON);
-    //testPath.schedule();
+    testPath.schedule();
   }
 
   /** This function is called periodically during autonomous. */
