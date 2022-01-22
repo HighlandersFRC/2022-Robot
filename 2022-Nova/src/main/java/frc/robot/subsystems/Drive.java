@@ -161,7 +161,6 @@ public class Drive extends SubsystemBase {
             originalY = 0;
         }
 
-
         double turn = -OI.getDriverRightX() * (Constants.TOP_SPEED)/(Constants.ROBOT_RADIUS);
         double navxOffset = peripherals.getNavxAngle();
         double xPower = getAdjustedX(originalX, originalY);

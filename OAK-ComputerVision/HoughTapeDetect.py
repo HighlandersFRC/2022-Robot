@@ -18,11 +18,11 @@ def connect_mqtt():
             print("Connected to MQTT Broker!")
         else:
             print("Failed to connect, return code %d\n", rc)
-        # Set Connecting Client ID
-        client = mqtt_client.Client(client_id)
-        client.username_pw_set("4499", "4499")
-        client.on_connect = on_connect
-        client.connect(broker, port)
+    # Set Connecting Client ID
+    client = mqtt_client.Client(client_id)
+    client.username_pw_set("4499", "4499")
+    client.on_connect = on_connect
+    client.connect(broker, port)
     return client
 
 def connect_mqttSub():
@@ -43,15 +43,13 @@ def publish(client, msg):
     result = client.publish(pubTopic, msg)
     # result: [0, 1]
     status = result[0]
-    if status == 0:
-        print(f"Send `{msg}` to Topic `{pubTopic}`")
-    else:
-        print(f"Failed to send message to Topic {pubTopic}")
+    if(status != 0):
+        print("Failed to send message to Topic")
     msg_count += 1
 
 def subscribe(client):
     def on_message(client, userdata, msg):
-        print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
+        print("Received " + str(msg) + " from Topic " + str(subTopic))
 
     # print("Listening")
     client.subscribe(subTopic, 2)
@@ -338,10 +336,13 @@ with depthai.Device(pipeline) as device:
 
                 cv2.circle(frame, (centerX, centerY), 3, color)
                 cv2.rectangle(depthFrameColor, (xmin, ymin), (xmax, ymax), color, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX)
-                publish(client, str(angle))
+
+                JSONString = '{"Distance": ' + str(centerX) + ', "Angle":' + str(angle) + '}' 
+
+                publish(client, JSONString)
             # print("Z: " + str((spatialData[0].spatialCoordinates.z)/25.4) + " X: " + str((spatialData[0].spatialCoordinates.x)) + " Y: " + str((spatialData[0].spatialCoordinates.y)))
             
-            # publish(client, str(angle))
+            publish(client, "Hola")
             subscribe(subClient)
             # client.loop_forever()
 

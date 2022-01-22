@@ -7,10 +7,16 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.commands.ContinuousAccelerationInterpolation;
 import frc.robot.commands.DriveForward;
+import frc.robot.commands.IntakeBalls;
+import frc.robot.commands.IntakeUp;
+import frc.robot.commands.VisionAlignment;
 import frc.robot.subsystems.Drive;
+import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.MqttPublish;
 import frc.robot.subsystems.MqttSubscribe;
 import frc.robot.subsystems.Peripherals;
+import frc.robot.subsystems.Shooter;
+import frc.robot.tools.PneumaticsControl;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -38,7 +44,13 @@ public class Robot extends TimedRobot {
   ContinuousAccelerationInterpolation testPath;
 
   private final Peripherals peripherals = new Peripherals();
-  private Drive drive = new Drive(peripherals);
+  private final Drive drive = new Drive(peripherals);
+  private final Shooter shooter = new Shooter();
+
+  private final PneumaticsControl pneumatics = new PneumaticsControl();
+  
+  private final Intake intake = new Intake(pneumatics);
+
   private final String subCameraTopic = "/sensors/camera";
   private final String pubCameraTopic = "/robot/camera";
 
@@ -54,6 +66,8 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     drive.init();
     peripherals.init();
+    intake.init();
+    shooter.init();
 
     // publish.publish(pubCameraTopic);
     subscribe.subscribe(subCameraTopic);
@@ -134,8 +148,13 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
 
-    OI.driverA.whenPressed(new DriveForward(drive, 2, true));
-    OI.driverB.whenPressed(new DriveForward(drive, 2, false));
+    // OI.driverA.whenPressed(new DriveForward(drive, 2, true));
+    // OI.driverB.whenPressed(new DriveForward(drive, 2, false));
+
+    OI.driverRT.whileHeld(new IntakeBalls(intake));
+    OI.driverB.whileHeld(new IntakeUp(intake));
+
+    OI.driverA.whenPressed(new VisionAlignment(drive, peripherals, subscribe));
 
   }
 
@@ -157,6 +176,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testInit() {
+    OI.driverRT.whileHeld(new IntakeBalls(intake));
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
   }

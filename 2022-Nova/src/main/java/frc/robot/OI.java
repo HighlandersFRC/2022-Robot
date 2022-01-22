@@ -5,6 +5,7 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import frc.robot.tools.TriggerButton;
 
 public class OI {
     public static XboxController driverController = new XboxController(0);
@@ -12,6 +13,9 @@ public class OI {
 
     public static JoystickButton driverA = new JoystickButton(driverController, 1);
     public static JoystickButton driverB = new JoystickButton(driverController, 2);
+
+    public static TriggerButton driverRT = new TriggerButton(driverController, 3);
+    public static TriggerButton driverLT = new TriggerButton(driverController, 2);
 
     public static double getDriverLeftX() {
         return driverController.getLeftX();

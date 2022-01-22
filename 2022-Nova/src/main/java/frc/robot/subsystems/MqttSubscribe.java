@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import org.json.*;
+import org.json.JSONObject;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -15,6 +17,8 @@ public class MqttSubscribe implements MqttCallback  {
 
 	/** The client id. */
 	private static final String clientId = "clientId12";
+
+    private double lastMessageVal = 0;
 
 	public void subscribe(String topic) {
         Runnable task = 
@@ -59,11 +63,16 @@ public class MqttSubscribe implements MqttCallback  {
 
 	}
 
-	public void messageArrived(String topic, MqttMessage message) throws Exception {
+    public double getLastMessageVal() {
+        return lastMessageVal;
+    }
 
+	public void messageArrived(String topic, MqttMessage message) throws Exception {
 		System.out.println("| Topic:" + topic);
 		System.out.println("| Message: " +message.toString());
 		System.out.println("-------------------------------------------------");
+
+        lastMessageVal = new JSONObject(message.toString()).getDouble("Angle");
 
 	}
 
