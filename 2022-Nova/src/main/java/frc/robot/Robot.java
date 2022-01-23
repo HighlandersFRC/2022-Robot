@@ -9,7 +9,6 @@ import frc.robot.commands.ContinuousAccelerationInterpolation;
 import frc.robot.commands.DriveForward;
 import frc.robot.commands.IntakeBalls;
 import frc.robot.commands.IntakeUp;
-import frc.robot.commands.VisionAlignment;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.MqttPublish;
@@ -152,9 +151,9 @@ public class Robot extends TimedRobot {
     // OI.driverB.whenPressed(new DriveForward(drive, 2, false));
 
     OI.driverRT.whileHeld(new IntakeBalls(intake));
-    OI.driverB.whileHeld(new IntakeUp(intake));
+    OI.driverLT.whileHeld(new IntakeUp(intake));
 
-    OI.driverA.whenPressed(new VisionAlignment(drive, peripherals, subscribe));
+  //  OI.driverA.whenPressed(new VisionAlignment(drive, peripherals, subscribe));
 
   }
 
