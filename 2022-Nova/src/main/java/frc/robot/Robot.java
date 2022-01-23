@@ -7,11 +7,17 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.commands.ContinuousAccelerationInterpolation;
 import frc.robot.commands.DriveForward;
+import frc.robot.commands.EjectBalls;
+import frc.robot.commands.FireBalls;
 import frc.robot.commands.IntakeBalls;
 import frc.robot.commands.IntakeUp;
+import frc.robot.commands.SetHoodPosition;
+import frc.robot.commands.SpinShooter;
 import frc.robot.commands.VisionAlignment;
 import frc.robot.subsystems.Drive;
+import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.LinearActuator;
 import frc.robot.subsystems.MqttPublish;
 import frc.robot.subsystems.MqttSubscribe;
 import frc.robot.subsystems.Peripherals;
@@ -46,6 +52,8 @@ public class Robot extends TimedRobot {
   private final Peripherals peripherals = new Peripherals();
   private final Drive drive = new Drive(peripherals);
   private final Shooter shooter = new Shooter();
+  private final LinearActuator linearActuator = new LinearActuator();
+  private final Feeder feeder = new Feeder();
 
   private final PneumaticsControl pneumatics = new PneumaticsControl();
   
@@ -68,6 +76,8 @@ public class Robot extends TimedRobot {
     peripherals.init();
     intake.init();
     shooter.init();
+    linearActuator.init();
+    feeder.init();
 
     // publish.publish(pubCameraTopic);
     subscribe.subscribe(subCameraTopic);
@@ -154,7 +164,14 @@ public class Robot extends TimedRobot {
     OI.driverRT.whileHeld(new IntakeBalls(intake));
     OI.driverB.whileHeld(new IntakeUp(intake));
 
-    OI.driverA.whenPressed(new VisionAlignment(drive, peripherals, subscribe));
+    OI.driverA.whenPressed(new SetHoodPosition(linearActuator, 0.2));
+    OI.driverB.whenPressed(new SetHoodPosition(linearActuator, 0.4));
+    OI.driverY.whenPressed(new SetHoodPosition(linearActuator, 0.6));
+    OI.driverX.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator));
+    OI.driverX.whenReleased(new SetHoodPosition(linearActuator, 0));
+    OI.driverX.whenReleased(new EjectBalls(feeder, 0));
+    OI.driverX.whenReleased(new SpinShooter(shooter, 0));
+    
 
   }
 

@@ -14,6 +14,9 @@ public class OI {
     public static JoystickButton driverA = new JoystickButton(driverController, 1);
     public static JoystickButton driverB = new JoystickButton(driverController, 2);
 
+    public static JoystickButton driverY = new JoystickButton(driverController, 3);
+    public static JoystickButton driverX = new JoystickButton(driverController, 4);
+
     public static TriggerButton driverRT = new TriggerButton(driverController, 3);
     public static TriggerButton driverLT = new TriggerButton(driverController, 2);
 

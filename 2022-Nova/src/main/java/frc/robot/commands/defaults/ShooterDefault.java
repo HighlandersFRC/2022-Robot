@@ -27,12 +27,7 @@ public class ShooterDefault extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    if(OI.driverController.getXButton()) {
-        shooter.setShooterPercent(0.5);
-    }
-    else {
-        shooter.setShooterPercent(0.0);
-    }
+    shooter.setShooterPercent(0);
   }
 
   // Called once the command ends or is interrupted.
