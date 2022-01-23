@@ -1,12 +1,14 @@
 import math
-
+from functools import cache
 import Point
 import Convert
 import File
+import colorsys
+import hashlib
 
 class Draw:
 
-    def __init__(self, pygame, screen, field, screenWidth, screenHeight, font, fieldWidth, fieldHeight):
+    def __init__(self, pygame, screen, field, screenWidth, screenHeight, font, fieldWidth, fieldHeight, points):
         self.pygame = pygame
         self.screen = screen
         self.field = field
@@ -19,7 +21,14 @@ class Draw:
         self.msgColor = (255, 0, 0)
         self.totalTime = 0
         self.showWheelPaths = False
+        self.colorVeloc = False
+        self.colorAccel = False
         self.xOffset = 315
+        self.wheelList = [[], [], []]
+        self.lowerAccelBound = -9.8
+        self.upperAccelBound = 9.8
+        self.upperVelocBound = 5
+        self.points = points
 
     def setTotalTime(self, time):
         if time > 0.0:
@@ -33,34 +42,34 @@ class Draw:
         self.pygame.draw.rect(self.screen, (0, 0, 0), (0, 0, self.screenWidth, self.screenHeight))
         self.screen.blit(self.field, (0, 0))
 
-        self.pygame.draw.line(self.screen, (0, 0, 0), (120, 422), (120, 375), 3)
-        self.pygame.draw.line(self.screen, (0, 0, 0), (120, 422), (167, 422), 3)
+        self.pygame.draw.line(self.screen, (0, 0, 0), (150, 472), (150, 425), 3)
+        self.pygame.draw.line(self.screen, (0, 0, 0), (150, 472), (197, 472), 3)
 
-        self.pygame.draw.line(self.screen, (0, 0, 0), (120, 375), (110, 385), 3)
-        self.pygame.draw.line(self.screen, (0, 0, 0), (120, 375), (130, 385), 3)
+        self.pygame.draw.line(self.screen, (0, 0, 0), (150, 425), (140, 435), 3)
+        self.pygame.draw.line(self.screen, (0, 0, 0), (150, 425), (160, 435), 3)
 
-        self.pygame.draw.line(self.screen, (0, 0, 0), (167, 422), (157, 432), 3)
-        self.pygame.draw.line(self.screen, (0, 0, 0), (167, 422), (157, 412), 3)
+        self.pygame.draw.line(self.screen, (0, 0, 0), (197, 472), (187, 482), 3)
+        self.pygame.draw.line(self.screen, (0, 0, 0), (197, 472), (187, 462), 3)
 
         x = self.font.render('+X', True, (0, 0, 0))
-        self.screen.blit(x, (130, 424))
+        self.screen.blit(x, (160, 474))
 
         y = self.font.render('+Y', True, (0, 0, 0))
-        self.screen.blit(y, (90, 395))
+        self.screen.blit(y, (120, 445))
 
-    def drawPoints(self, points):
+    def drawPoints(self):
         mousePosPixels = list(self.pygame.mouse.get_pos())
 
-        if len(points) > 0:
-            prevX = points[0].pixelX
-            prevY = points[0].pixelY
+        if len(self.points) > 0:
+            prevX = self.points[0].pixelX
+            prevY = self.points[0].pixelY
 
-        for point in points:
+        for point in self.points:
             radius = 4
             if Convert.getDist(mousePosPixels[0], mousePosPixels[1], point.pixelX, point.pixelY) < 4 or point.color == (0, 0, 255):
                 radius = 6
             #self.pygame.draw.line(self.screen, (255, 0, 0), (prevX, prevY), (point.pixelX, point.pixelY), 3)
-            self.drawConstAccelPath(points, 0.01)
+            self.drawConstAccelPath(0.01)
             prevX = point.pixelX
             prevY = point.pixelY
             self.pygame.draw.line(self.screen, (0, 255, 0), (point.pixelX - 1, point.pixelY - 1), (20 * math.cos((math.pi * 2) - point.angle) + point.pixelX - 1, 20 * math.sin((math.pi * 2) - point.angle) + point.pixelY - 1), 2)
@@ -105,6 +114,58 @@ class Draw:
 
         self.screen.blit(download, (1051 + self.xOffset, 302))
         self.screen.blit(all, (1080 + self.xOffset, 328))
+
+        #Color Velocity and Acceleration buttons
+        color = self.font.render("Color...", True, (255, 255, 255))
+        self.screen.blit(color, (1475, 100))
+
+        if self.colorAccel:
+            accelColor = (0, 255, 0)
+        else:
+            accelColor = (255, 0, 0)
+
+        if self.colorVeloc:
+            velocColor = (0, 255, 0)
+        else:
+            velocColor = (255, 0, 0)
+
+        self.pygame.draw.rect(self.screen, accelColor, (1475, 130, 70, 50))
+        self.pygame.draw.rect(self.screen, velocColor, (1475, 200, 70, 50))
+
+        accel = self.font.render("Accel", True, (0, 0, 0))
+        veloc = self.font.render("Veloc", True, (0, 0, 0))
+
+        self.screen.blit(accel, (1483, 142))
+        self.screen.blit(veloc, (1483, 212))
+
+        #Acceleration and Velocity Key
+        if self.colorAccel:
+            lAccelBound = self.font.render(f"{self.lowerAccelBound} m/s^2", True, (255, 255, 255))
+            uAccelBound = self.font.render(f"{self.upperAccelBound} m/s^2", True, (255, 255, 255))
+
+            self.screen.blit(uAccelBound, (1475, 255))
+            self.screen.blit(lAccelBound, (1475, 405))
+
+            self.pygame.draw.rect(self.screen, (255, 255, 255), (1497, 280, 50, 120), width=2)
+
+            for i in range(117):
+                c = colorsys.hsv_to_rgb((117 - i) / 117, 1, 1)
+                c = tuple(255 * x for x in c)
+                self.pygame.draw.line(self.screen, c, (1499, 282 + i), (1545, 282 + i), 1)
+
+        elif self.colorVeloc:
+            uVelocBound = self.font.render(f"{self.upperVelocBound} m/s", True, (255, 255, 255))
+            zero = self.font.render("0 m/s", True, (255, 255, 255))
+
+            self.screen.blit(uVelocBound, (1475, 255))
+            self.screen.blit(zero, (1475, 405))
+
+            self.pygame.draw.rect(self.screen, (255, 255, 255), (1497, 280, 50, 120), width=2)
+
+            for i in range(117):
+                c = colorsys.hsv_to_rgb((117 - i) / 117, 1, 1)
+                c = tuple(255 * x for x in c)
+                self.pygame.draw.line(self.screen, c, (1499, 282 + i), (1545, 282 + i), 1)
 
         #Toggle path button
         if self.showWheelPaths:
@@ -184,6 +245,7 @@ class Draw:
         pathTime = self.font.render("Path Time: " + str(self.totalTime), True, (255, 255, 255))
         timeToPoint = self.font.render("Time to point: " + str(point.time), True, (255, 255, 255))
         interpRange = self.font.render("Interp: " + str(point.interpolationRange), True, interpNameColor)
+        
 
         #Draw text
         self.screen.blit(pointAngle, (infoX + self.xOffset, 10))
@@ -195,7 +257,7 @@ class Draw:
         self.screen.blit(pathName, (infoX + self.xOffset, 470))
         self.screen.blit(saveName, (1015 + self.xOffset, 10))
         self.screen.blit(pathTime, (1015 + self.xOffset, 370))
-        self.screen.blit(timeToPoint, (1015 + self.xOffset, 400))
+        self.screen.blit(timeToPoint, (1005 + self.xOffset, 425))
         self.screen.blit(interpRange, (1015 + self.xOffset, 450))
 
         #Angle visual
@@ -255,7 +317,6 @@ class Draw:
             while point.angle < 0:
                 point.angle += 2 * math.pi
             point.angle = (math.pi * 2) - point.angle
-            
 
         Point.saveSelectedPoint(point, self.fieldWidth, self.fieldHeight)
 
@@ -307,186 +368,37 @@ class Draw:
         if x >= 975 + self.xOffset and x <= 1025 + self.xOffset and y >= 225 and y <= 275:
             self.showWheelPaths = not self.showWheelPaths
 
-    def drawConstAccelPath(self, points, samplePeriod):
-        pi = math.pi
-        prevInterpPoint2Meters = []
-        prevT2Theta = 0
-        prevT2 = 0
-        prevV2 = 0
-        for p in points:
-            if p.index != 0 and p.index != len(points) - 1:
-                p1 = points[p.index - 1]
-                p2 = points[p.index]
-                p3 = points[p.index + 1]
+        #Color acceleration and velocity buttons
+        if x >= 1475 and x <= 1545 and y >= 130 and y <= 180:
+            self.colorAccel = not self.colorAccel
+            self.colorVeloc = False
+        if x >= 1475 and x <= 1545 and y >= 200 and y <= 250:
+            self.colorAccel = False
+            self.colorVeloc = not self.colorVeloc
 
-                interpFraction = p2.interpolationRange
+    def drawConstAccelPath(self, samplePeriod):
+        time = self.points[0].time
+        endTime = self.points[-1].time
+        val = ''
+        for p in self.points:
+            val = val + str(p.x) + str(p.y) + str(p.time) + str(p.interpolationRange) + str(p.angle)
+        m = hashlib.sha256(val.encode('utf-8')).hexdigest()
 
-                if interpFraction == 1:
-                    interpFraction = 0.99
+        while time <= endTime:
+            positionsList = self.sampleInterpPos(time, str(m))
+            pixelPositionsList = list(Convert.getPixelPos(x) for x in positionsList)
 
-                t1 = p1.time + (p2.time - p1.time) * interpFraction
-                t2 = p2.time + (p3.time - p2.time) * (1 - interpFraction)
+            if self.showWheelPaths:
+                # for point in pixelPositionsList:
+                #     self.pygame.draw.circle(self.screen, (255, 0, 0), point, 1)
+                self.pygame.draw.circle(self.screen, (255, 0, 0), pixelPositionsList[0], 1)
+                self.pygame.draw.circle(self.screen, (255, 0, 0), pixelPositionsList[1], 1)
+            else:
+                self.pygame.draw.circle(self.screen, (255, 0, 0), pixelPositionsList[0], 1)
 
-                theta1 = math.atan2((p1.y - p2.y), (p1.x - p2.x))
-                theta2 = math.atan2((p3.y - p2.y), (p3.x - p2.x))
+            time += samplePeriod
 
-                interpPoint1 = (p2.x + ((1 - interpFraction) * (Convert.getDist(p1.x, p1.y, p2.x, p2.y)) * math.cos(theta1)), p2.y + ((1 - interpFraction) * Convert.getDist(p2.x, p2.y, p1.x, p1.y)) * math.sin(theta1))
-                interpPoint2 = (p2.x + ((1 - interpFraction) * (Convert.getDist(p3.x, p3.y, p2.x, p2.y)) * math.cos(theta2)), p2.y + ((1 - interpFraction) * Convert.getDist(p2.x, p2.y, p3.x, p3.y)) * math.sin(theta2))
-
-                interpPoint1 = Convert.getPixelPos(interpPoint1)
-                interpPoint2 = Convert.getPixelPos(interpPoint2)
-
-                self.pygame.draw.line(self.screen, (255, 0, 0), ((p1.pixelX + p2.pixelX) / 2, (p1.pixelY + p2.pixelY) / 2), interpPoint1, 2)
-                self.pygame.draw.line(self.screen, (255, 0, 0), ((p3.pixelX + p2.pixelX) / 2, (p3.pixelY + p2.pixelY) / 2), interpPoint2, 2)
-
-                #self.pygame.draw.line(self.screen, (0, 255, 0), interpPoint1, interpPoint2, 2)
-
-                interpPoint1Meters = Convert.getFieldPos(interpPoint1)
-                interpPoint2Meters = Convert.getFieldPos(interpPoint2)
-                interpDistMeters = Convert.getDist(interpPoint1Meters[0], interpPoint1Meters[1], interpPoint2Meters[0], interpPoint2Meters[1])
-
-                targetTheta = pi + math.atan2((interpPoint1Meters[1] - interpPoint2Meters[1]), (interpPoint1Meters[0] - interpPoint2Meters[0]))
-                targetTheta = targetTheta % (pi * 2)
-
-                v1 = Convert.getDist(p1.x, p1.y, interpPoint1Meters[0], interpPoint1Meters[1]) / (t1 - p1.time)
-                v2 = Convert.getDist(p3.x, p3.y, interpPoint2Meters[0], interpPoint2Meters[1]) / (p3.time - t2)
-
-                if p1.angle >= p2.angle:
-                    op2 = ((pi * 2) - (p1.angle - p2.angle))
-                    op1 = (p1.angle - p2.angle)
-                else:
-                    op1 = ((pi * 2) - (p2.angle - p1.angle))
-                    op2 = (p2.angle - p1.angle)
-
-                if p2.angle >= p3.angle:
-                    op3 = ((pi * 2) - (p2.angle - p3.angle))
-                    op4 = (p2.angle - p3.angle)
-                else:
-                    op3 = ((pi * 2) - (p3.angle - p2.angle))
-                    op4 = (p3.angle - p2.angle)
-
-                if op1 <= op2:
-                    sine1 = -1
-                    difWheelTheta1 = op1
-                else:
-                    sine1 = 1
-                    difWheelTheta1 = op2
-
-                if op3 <= op4:
-                    sine2 = 1
-                    difWheelTheta2 = op3
-                else:
-                    sine2 = -1
-                    difWheelTheta2 = op4
-
-                t1Theta = (p1.angle + ((difWheelTheta1 * interpFraction) * sine1)) % (pi * 2)
-                t2Theta = (p2.angle + ((difWheelTheta2 * (1 - interpFraction)) * sine2)) % (pi * 2)
-
-                # print('1: ' + str(difWheelTheta1))
-                # print('2: ' + str(difWheelTheta2))
-
-                time = t1
-                difTime = t2 - t1
-                difVel = v2 - v1
-                neededAccel = difVel / difTime
-                endDist = (neededAccel * difTime + v1) * (difTime)
-                theta1 += pi
-                theta1 = theta1 % (pi * 2)
-
-                difTheta = abs(theta1 - targetTheta)
-                if difTheta > pi:
-                    difTheta = (pi * 2) - difTheta
-
-                while time <= t2 and time >= t1:
-                    currentDist = ((neededAccel * (time - t1) + v1) * (time - t1)) * (interpDistMeters / endDist)
-
-                    if time <= p2.time:
-                        wheelTheta = (p1.angle + ((difWheelTheta1 * ((time - p1.time) / (p2.deltaTime))) * sine1)) % (pi * 2)
-                    else:
-                        wheelTheta = (p2.angle + ((difWheelTheta2 * ((time - p2.time) / (p3.deltaTime))) * sine2)) % (pi * 2)
-
-                    if theta1 < targetTheta:
-                        if abs(theta1 - targetTheta) < pi:
-                            currentTheta = theta1 + (difTheta * ((time - t1) / difTime))
-                        else:
-                            currentTheta = theta1 - (difTheta * ((time - t1) / difTime))
-                    else:
-                        if abs(theta1 - targetTheta) < pi:
-                            currentTheta = theta1 - (difTheta * ((time - t1) / difTime))
-                        else:
-                            currentTheta = theta1 + (difTheta * ((time - t1) / difTime))
-                    currentTheta = currentTheta % (pi * 2)
-
-                    x = interpPoint1Meters[0] + currentDist * math.cos(currentTheta)
-                    y = interpPoint1Meters[1] + currentDist * math.sin(currentTheta)
-                    point = Convert.getPixelPos((x, y))
-                    
-                    self.pygame.draw.circle(self.screen, (0, 255, 0), point, 1)
-                    if self.showWheelPaths:
-                        self.drawWheelsAtPoint(x, y, wheelTheta)
-
-                    # print('wheelTheta: ' + str(wheelTheta))
-
-                    time += samplePeriod
-
-                # print('angle1: ' + str(p1.angle))
-                # print('t1Theta: ' + str(t1Theta))
-                # print('angle2: ' + str(p2.angle))
-                # print('t2Theta: ' + str(t2Theta))
-                # print('angle3: ' + str(p3.angle))
-                
-                
-                if p1.index >= 1:
-
-                    if prevT2Theta >= t1Theta:
-                        op5 = ((pi * 2) - (prevT2Theta - t1Theta))
-                        op6 = (prevT2Theta - t1Theta)
-                    else:
-                        op6 = ((pi * 2) - (t1Theta - prevT2Theta))
-                        op5 = (t1Theta - prevT2Theta)
-
-                    if op5 <= op6:
-                        sine3 = 1
-                    else:
-                        sine3 = -1
-                        
-
-                    if self.showWheelPaths:
-                        self.drawWheelsOnLine(samplePeriod, prevT2Theta, t1Theta, (t1 - prevT2), prevV2, prevInterpPoint2Meters[0], prevInterpPoint2Meters[1], interpPoint1Meters[0], interpPoint1Meters[1], sine3)
-
-                if p1.index == 0:
-
-                    if self.showWheelPaths:
-                        self.drawWheelsOnLine(samplePeriod, p1.angle, t1Theta, (t1 - p1.time), 0, p1.x, p1.y, interpPoint1Meters[0], interpPoint1Meters[1], sine1)
-
-                    self.pygame.draw.line(self.screen, (255, 0, 0), (points[0].pixelX, points[0].pixelY), ((p1.pixelX + p2.pixelX) / 2, (p1.pixelY + p2.pixelY) / 2), 2)
-                    
-                    
-                if p3.index == len(points) - 1:
-
-                    if self.showWheelPaths:
-                       self.drawWheelsOnLine(samplePeriod, t2Theta, p3.angle, p3.deltaTime - (t2 - p2.time), v2, interpPoint2Meters[0], interpPoint2Meters[1], p3.x, p3.y, sine2)
-
-                    self.pygame.draw.line(self.screen, (255, 0, 0), (points[-1].pixelX, points[-1].pixelY), ((p3.pixelX + p2.pixelX) / 2, (p3.pixelY + p2.pixelY) / 2), 2)
-
-                prevInterpPoint2Meters = interpPoint2Meters
-                prevT2Theta = t2Theta
-                prevT2 = t2
-                prevV2 = v2
-
-                #print('t1Theta: ' + str(t1Theta))
-                #print('t2Theta: ' + str(t2Theta))
-            
-            elif len(points) == 2:
-                p1 = points[0]
-                p2 = points[1]
-
-                if self.showWheelPaths:
-                    self.drawWheelsOnLine(samplePeriod, p1.angle, p2.angle, p2.deltaTime, 0, p1.x, p1.y, p2.x, p2.y, 1)
-
-                self.pygame.draw.line(self.screen, (255, 0, 0), (points[0].pixelX, points[0].pixelY), (points[1].pixelX, points[1].pixelY), 2)
-
-    def drawWheelsAtPoint(self, metersX, metersY, angle):
+    def drawWheelsAtPoint(self, metersX, metersY, angle, samplePeriod):
         pi = math.pi
         distM = 0.39513
         #distM = 1
@@ -495,15 +407,112 @@ class Draw:
         bLAngle = ((5 * pi) / 4) + angle
         bRAngle = ((7 * pi) / 4) + angle
 
-        fL = Convert.getPixelPos([metersX + distM * math.cos(fLAngle), metersY + distM * math.sin(fLAngle)])
-        fR = Convert.getPixelPos([metersX + distM * math.cos(fRAngle), metersY + distM * math.sin(fRAngle)])
-        bL = Convert.getPixelPos([metersX + distM * math.cos(bLAngle), metersY + distM * math.sin(bLAngle)])
-        bR = Convert.getPixelPos([metersX + distM * math.cos(bRAngle), metersY + distM * math.sin(bRAngle)])
+        fLp = Convert.getPixelPos([metersX + distM * math.cos(fLAngle), metersY + distM * math.sin(fLAngle)])
+        fRp = Convert.getPixelPos([metersX + distM * math.cos(fRAngle), metersY + distM * math.sin(fRAngle)])
+        bLp = Convert.getPixelPos([metersX + distM * math.cos(bLAngle), metersY + distM * math.sin(bLAngle)])
+        bRp = Convert.getPixelPos([metersX + distM * math.cos(bRAngle), metersY + distM * math.sin(bRAngle)])
 
-        self.pygame.draw.circle(self.screen, (255, 0, 255), fL, 1)
-        self.pygame.draw.circle(self.screen, (255, 0, 255), fR, 1)
-        self.pygame.draw.circle(self.screen, (255, 0, 255), bL, 1)
-        self.pygame.draw.circle(self.screen, (255, 0, 255), bR, 1)
+        fL = (metersX + distM * math.cos(fLAngle), metersY + distM * math.sin(fLAngle))
+        fR = (metersX + distM * math.cos(fRAngle), metersY + distM * math.sin(fRAngle))
+        bL = (metersX + distM * math.cos(bLAngle), metersY + distM * math.sin(bLAngle))
+        bR = (metersX + distM * math.cos(bRAngle), metersY + distM * math.sin(bRAngle))
+
+        flColor = (255, 0, 255)
+        frColor = (255, 0, 255)
+        blColor = (255, 0, 255)
+        brColor = (255, 0, 255)
+
+        self.updateWheelPoints([fL, fR, bL, bR])
+
+        l = self.getNumWheelsPoints()
+
+        if l >= 2 and self.colorVeloc:
+            flv = (Convert.getDist(self.wheelList[0][0][0], self.wheelList[0][0][1], self.wheelList[1][0][0], self.wheelList[1][0][1]) / samplePeriod)
+            frv = (Convert.getDist(self.wheelList[0][1][0], self.wheelList[0][1][1], self.wheelList[1][1][0], self.wheelList[1][1][1]) / samplePeriod)
+            blv = (Convert.getDist(self.wheelList[0][2][0], self.wheelList[0][2][1], self.wheelList[1][2][0], self.wheelList[1][2][1]) / samplePeriod)
+            brv = (Convert.getDist(self.wheelList[0][3][0], self.wheelList[0][3][1], self.wheelList[1][3][0], self.wheelList[1][3][1]) / samplePeriod)
+
+            upperVelocBound = self.upperVelocBound
+
+            if flv > upperVelocBound:
+                flColor = (0, 0, 0)
+            else:
+                flColor = colorsys.hsv_to_rgb(flv / upperVelocBound, 1, 1)
+                flColor = tuple(255 * x for x in flColor)
+            
+            if frv > upperVelocBound:
+                frColor = (0, 0, 0)
+            else:
+                frColor = colorsys.hsv_to_rgb(frv / upperVelocBound, 1, 1)
+                frColor = tuple(255 * x for x in frColor)
+
+            if blv > upperVelocBound:
+                blColor = (0, 0, 0)
+            else:
+                blColor = colorsys.hsv_to_rgb(blv / upperVelocBound, 1, 1)
+                blColor = tuple(255 * x for x in blColor)
+
+            if brv > upperVelocBound:
+                brColor = (0, 0, 0)
+            else:
+                brColor = colorsys.hsv_to_rgb(brv / upperVelocBound, 1, 1)
+                brColor = tuple(255 * x for x in brColor)
+
+        if l == 3 and self.colorAccel:
+            flv1 = (Convert.getDist(self.wheelList[0][0][0], self.wheelList[0][0][1], self.wheelList[1][0][0], self.wheelList[1][0][1]) / samplePeriod)
+            frv1 = (Convert.getDist(self.wheelList[0][1][0], self.wheelList[0][1][1], self.wheelList[1][1][0], self.wheelList[1][1][1]) / samplePeriod)
+            blv1 = (Convert.getDist(self.wheelList[0][2][0], self.wheelList[0][2][1], self.wheelList[1][2][0], self.wheelList[1][2][1]) / samplePeriod)
+            brv1 = (Convert.getDist(self.wheelList[0][3][0], self.wheelList[0][3][1], self.wheelList[1][3][0], self.wheelList[1][3][1]) / samplePeriod)
+
+            flv2 = (Convert.getDist(self.wheelList[1][0][0], self.wheelList[1][0][1], self.wheelList[2][0][0], self.wheelList[2][0][1]) / samplePeriod)
+            frv2 = (Convert.getDist(self.wheelList[1][1][0], self.wheelList[1][1][1], self.wheelList[2][1][0], self.wheelList[2][1][1]) / samplePeriod)
+            blv2 = (Convert.getDist(self.wheelList[1][2][0], self.wheelList[1][2][1], self.wheelList[2][2][0], self.wheelList[2][2][1]) / samplePeriod)
+            brv2 = (Convert.getDist(self.wheelList[1][3][0], self.wheelList[1][3][1], self.wheelList[2][3][0], self.wheelList[2][3][1]) / samplePeriod)
+
+            flA = (flv2 - flv1) / samplePeriod
+            frA = (frv2 - frv1) / samplePeriod
+            blA = (blv2 - blv1) / samplePeriod
+            brA = (brv2 - brv1) / samplePeriod
+
+            upperAccelBound = self.upperAccelBound
+            lowerAccelBound = self.lowerAccelBound
+
+            if flA > upperAccelBound:
+                flColor = (0, 0, 0)
+            elif flA < lowerAccelBound:
+                flColor = (0, 0, 0)
+            else:
+                flColor = colorsys.hsv_to_rgb((flA + abs(lowerAccelBound)) / (upperAccelBound - lowerAccelBound), 1, 1)
+                flColor = tuple(255 * x for x in flColor)
+
+            if frA > upperAccelBound:
+                frColor = (0, 0, 0)
+            elif frA < lowerAccelBound:
+                frColor = (0, 0, 0)
+            else:
+                frColor = colorsys.hsv_to_rgb((frA + abs(lowerAccelBound)) / (upperAccelBound - lowerAccelBound), 1, 1)
+                frColor = tuple(255 * x for x in frColor)
+
+            if blA > upperAccelBound:
+                blColor = (0, 0, 0)
+            elif blA < lowerAccelBound:
+                blColor = (0, 0, 0)
+            else:
+                blColor = colorsys.hsv_to_rgb((blA + abs(lowerAccelBound)) / (upperAccelBound - lowerAccelBound), 1, 1)
+                blColor = tuple(255 * x for x in blColor)
+
+            if brA > upperAccelBound:
+                brColor = (0, 0, 0)
+            elif brA < lowerAccelBound:
+                brColor = (0, 0, 0)
+            else:
+                brColor = colorsys.hsv_to_rgb((brA + abs(lowerAccelBound)) / (upperAccelBound - lowerAccelBound), 1, 1)
+                brColor = tuple(255 * x for x in brColor)
+
+        self.pygame.draw.circle(self.screen, flColor, fLp, 1)
+        self.pygame.draw.circle(self.screen, frColor, fRp, 1)
+        self.pygame.draw.circle(self.screen, blColor, bLp, 1)
+        self.pygame.draw.circle(self.screen, brColor, bRp, 1)
 
     def drawWheelsOnLine(self, samplePeriod, theta1, theta2, difTime, v1, x1, y1, x2, y2, sine):
         pi = math.pi
@@ -525,6 +534,251 @@ class Draw:
 
             point = list(Convert.getXY(currentDist, drawTheta, x1, y1))
 
-            self.drawWheelsAtPoint(point[0], point[1], currentTheta)
+            self.drawWheelsAtPoint(point[0], point[1], currentTheta, samplePeriod)
 
             time += samplePeriod
+
+    def getNumWheelsPoints(self):
+        n = 0
+        if self.wheelList[0]:
+            n += 1
+        if self.wheelList[1]:
+            n += 1
+        if self.wheelList[2]:
+            n += 1
+        return n
+
+    def updateWheelPoints(self, wheels):
+        self.wheelList[2] = self.wheelList[1]
+        self.wheelList[1] = self.wheelList[0]
+        self.wheelList[0] = wheels
+
+    @cache
+    def getWheelsAtPoint(self, center, angle):
+        pi = math.pi
+        distM = 0.39513
+        fLAngle = ((3 * pi) / 4) + angle
+        fRAngle = (pi / 4) + angle
+        bLAngle = ((5 * pi) / 4) + angle
+        bRAngle = ((7 * pi) / 4) + angle
+
+        x = list(center)[0]
+        y = list(center)[1]
+
+        fL = (x + distM * math.cos(fLAngle), y + distM * math.sin(fLAngle))
+        fR = (x + distM * math.cos(fRAngle), y + distM * math.sin(fRAngle))
+        bL = (x + distM * math.cos(bLAngle), y + distM * math.sin(bLAngle))
+        bR = (x + distM * math.cos(bRAngle), y + distM * math.sin(bRAngle))
+
+        return [center, fL, fR, bL, bR]
+
+    @cache
+    def sampleInterpPos(self, time, hash):
+        #return array format [center, fL, fR, bL, bR]
+        pi = math.pi
+        currentPointIndex = 0
+        lowestTimeDiff = 0
+
+        tempAngle = 0
+
+        timeDiffArray = []
+
+        #Setting time diff array
+        if len(self.points) > 1:
+            for i in range(len(self.points)):
+                timeDiffArray.append(abs(time - self.points[i].time))
+                i += 1
+        
+        #Find time closest to current time
+        for i in range(len(timeDiffArray)):
+            if i == 0:
+                lowestTimeDiff = timeDiffArray[0]
+                currentPointIndex = 0
+            else:
+                if timeDiffArray[i] < lowestTimeDiff:
+                    lowestTimeDiff = timeDiffArray[i]
+                    currentPointIndex = i
+
+        #If time is past last point
+        if time >= self.points[-1].time:
+            p = self.points[-1]
+            return self.getWheelsAtPoint((p.x, p.y), p.angle)
+
+        #If time is before first point
+        if time < self.points[0].time:
+            p = self.points[0]
+            return self.getWheelsAtPoint((p.x, p.y), p.angle)
+
+        currentPoint = self.points[currentPointIndex]
+
+        #If current point is the last point
+        if currentPointIndex + 1 >= len(self.points):
+            p3 = currentPoint
+            p2 = self.points[currentPointIndex - 1]
+
+            if p2.angle >= p3.angle:
+                op2 = ((pi * 2) - (p2.angle - p3.angle))
+                op1 = (p2.angle - p3.angle)
+            else:
+                op1 = ((pi * 2) - (p3.angle - p2.angle))
+                op2 = (p3.angle - p2.angle)
+
+            if op1 <= op2:
+                sine2 = -1
+                difWheelTheta2 = op1
+            else:
+                sine2 = 1
+                difWheelTheta2 = op2
+
+            wheelTheta = (p2.angle + ((difWheelTheta2 * ((time - p2.time) / (p3.deltaTime))) * sine2)) % (pi * 2)
+            
+            vX = (p3.x - p2.x) / (p3.time - p2.time)
+            vY = (p3.y - p2.y) / (p3.time - p2.time)
+
+            x = p2.x + (vX * (time - p2.time))
+            y = p2.y + (vY * (time - p2.time))
+
+            return self.getWheelsAtPoint((x, y), wheelTheta)
+
+        #If current point is the first point
+        if currentPointIndex == 0:
+            p1 = currentPoint
+            p2 = self.points[1]
+
+            if p1.angle >= p2.angle:
+                op2 = ((pi * 2) - (p1.angle - p2.angle))
+                op1 = (p1.angle - p2.angle)
+            else:
+                op1 = ((pi * 2) - (p2.angle - p1.angle))
+                op2 = (p2.angle - p1.angle)
+
+            if op1 <= op2:
+                sine2 = -1
+                difWheelTheta2 = op1
+            else:
+                sine2 = 1
+                difWheelTheta2 = op2
+
+            wheelTheta = (p1.angle + ((difWheelTheta2 * ((time - p1.time) / (p2.deltaTime))) * sine2)) % (pi * 2)
+
+            vX = (p2.x - p1.x) / (p2.time - p1.time)
+            vY = (p2.y - p1.y) / (p2.time - p1.time)
+
+            x = p1.x + (vX * (time - p1.time))
+            y = p1.y + (vY * (time - p1.time))
+
+            return self.getWheelsAtPoint((x, y), wheelTheta)
+
+        p1 = self.points[currentPointIndex - 1]
+        p2 = currentPoint
+        p3 = self.points[currentPointIndex + 1]
+
+        interpFactor = p2.interpolationRange
+
+        timeDif1 = p2.time - p1.time
+        t1 = (timeDif1 * interpFactor) + p1.time
+
+        timeDif2 = p3.time - p2.time
+        t2 = (timeDif2 * (1 - interpFactor)) + p2.time
+        
+
+        v1X = (p2.x - p1.x) / (timeDif1)
+        v1Y = (p2.y - p1.y) / (timeDif1)
+        v2X = (p3.x - p2.x) / (timeDif2)
+        v2Y = (p3.y - p2.y) / (timeDif2)
+
+        #If on the line segment between previous point and current point
+        if time < t1:
+            if p1.angle >= p2.angle:
+                op2 = ((pi * 2) - (p1.angle - p2.angle))
+                op1 = (p1.angle - p2.angle)
+            else:
+                op1 = ((pi * 2) - (p2.angle - p1.angle))
+                op2 = (p2.angle - p1.angle)
+
+            if op1 <= op2:
+                sine2 = -1
+                difWheelTheta2 = op1
+            else:
+                sine2 = 1
+                difWheelTheta2 = op2
+
+            wheelTheta = (p1.angle + ((difWheelTheta2 * ((time - p1.time) / (p2.deltaTime))) * sine2)) % (pi * 2)
+
+            x = p1.x + (v1X * (time - p1.time))
+            y = p1.y + (v1Y * (time - p1.time))
+
+            return self.getWheelsAtPoint((x, y), wheelTheta)
+
+        #If on the line segment between current point and next point
+        if time >= t2:
+            if p2.angle >= p3.angle:
+                op2 = ((pi * 2) - (p2.angle - p3.angle))
+                op1 = (p2.angle - p3.angle)
+            else:
+                op1 = ((pi * 2) - (p3.angle - p2.angle))
+                op2 = (p3.angle - p2.angle)
+
+            if op1 <= op2:
+                sine2 = -1
+                difWheelTheta2 = op1
+            else:
+                sine2 = 1
+                difWheelTheta2 = op2
+
+            wheelTheta = (p2.angle + ((difWheelTheta2 * ((time - p2.time) / (p3.deltaTime))) * sine2)) % (pi * 2)
+
+            x = p2.x + (v2X * (time - p2.time))
+            y = p2.y + (v2Y * (time - p2.time))
+            return self.getWheelsAtPoint((x, y), wheelTheta)
+
+        #If inside the interpolation range
+        if time >= t1 and time < t2:
+
+            if p1.angle >= p2.angle:
+                op2 = ((pi * 2) - (p1.angle - p2.angle))
+                op1 = (p1.angle - p2.angle)
+            else:
+                op1 = ((pi * 2) - (p2.angle - p1.angle))
+                op2 = (p2.angle - p1.angle)
+
+            if p2.angle >= p3.angle:
+                op3 = ((pi * 2) - (p2.angle - p3.angle))
+                op4 = (p2.angle - p3.angle)
+            else:
+                op3 = ((pi * 2) - (p3.angle - p2.angle))
+                op4 = (p3.angle - p2.angle)
+
+            if op1 <= op2:
+                sine1 = -1
+                difWheelTheta1 = op1
+            else:
+                sine1 = 1
+                difWheelTheta1 = op2
+
+            if op3 <= op4:
+                sine2 = 1
+                difWheelTheta2 = op3
+            else:
+                sine2 = -1
+                difWheelTheta2 = op4
+
+            if time < p2.time:
+                wheelTheta = (p1.angle + ((difWheelTheta1 * ((time - p1.time) / (p2.deltaTime))) * sine1)) % (pi * 2)
+            else:
+                wheelTheta = (p2.angle + ((difWheelTheta2 * ((time - p2.time) / (p3.deltaTime))) * sine2)) % (pi * 2)
+
+            interpTime = time - t1
+
+            #Calculate accelerations
+            accelX = (v2X - v1X) / (t2 - t1)
+            accelY = (v2Y - v1Y) / (t2 - t1)
+
+            #Determine point at t1
+            t1X = (v1X * (t1 - p1.time)) + p1.x
+            t1Y = (v1Y * (t1 - p1.time)) + p1.y
+
+            x = ((accelX / 2) * (interpTime ** 2)) + (v1X * interpTime) + t1X
+            y = ((accelY / 2) * (interpTime ** 2)) + (v1Y * interpTime) + t1Y
+
+            return self.getWheelsAtPoint((x, y), wheelTheta)

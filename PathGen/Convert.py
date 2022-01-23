@@ -50,3 +50,4 @@ def getThetaDif(theta1, theta2):
     if difTheta > math.pi:
         difTheta = (math.pi * 2) - difTheta
     return difTheta
+

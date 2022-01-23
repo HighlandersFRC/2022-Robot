@@ -9,7 +9,7 @@ from datetime import datetime
 
 pygame.init()
 
-screenWidth = 1550
+screenWidth = 1600
 screenHeight = 500
 
 selectedValue = 0
@@ -32,7 +32,7 @@ font = pygame.font.SysFont("Corbel", 24)
 screen = pygame.display.set_mode([screenWidth, screenHeight]) 
 pygame.display.set_caption("PathGen")
 
-draw = Draw(pygame, screen, backgroundImg, screenWidth, screenHeight, font, fieldWidth, fieldHeight)
+draw = Draw(pygame, screen, backgroundImg, screenWidth, screenHeight, font, fieldWidth, fieldHeight, Point.getPoints())
 
 running = True
 while running:
@@ -98,7 +98,7 @@ while running:
     ############
 
     draw.drawField()
-    draw.drawPoints(Point.getPoints())
+    draw.drawPoints()
     draw.drawMouseCoords(fileName)
     if selectedPoint != None:
         selectedValue = draw.drawPointInfo(selectedPoint, fileName, saveName)

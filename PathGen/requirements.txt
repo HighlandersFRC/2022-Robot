@@ -7,3 +7,4 @@ pygame==2.1.0
 PyNaCl==1.4.0       
 scp==0.14.1
 six==1.16.0
+syscolors==0.0.5  
