@@ -5,7 +5,10 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.InvertType;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.commands.defaults.IntakeDefault;
@@ -14,8 +17,8 @@ import frc.robot.tools.PneumaticsControl;
 
 public class Shooter extends SubsystemBase {
 
-  private final TalonFX shooterMaster = new TalonFX(10);
-  private final TalonFX shooterFollower = new TalonFX(9);
+  private final TalonFX leftShooter = new TalonFX(10);
+  private final TalonFX rightShooter = new TalonFX(9);
 
   /** Creates a new Intake. */
   public Shooter() {
@@ -23,12 +26,16 @@ public class Shooter extends SubsystemBase {
   }
 
   public void init() {
-    shooterFollower.set(ControlMode.Follower, 10);
+    // rightShooter.set(ControlMode.Follower, 10);
+    leftShooter.setNeutralMode(NeutralMode.Coast);
+    rightShooter.setNeutralMode(NeutralMode.Coast);
+    rightShooter.setInverted(InvertType.InvertMotorOutput);
     setDefaultCommand(new ShooterDefault(this));
   }
 
   public void setShooterPercent(double percent) {
-    shooterMaster.set(ControlMode.PercentOutput, percent);
+    leftShooter.set(ControlMode.PercentOutput, percent);
+    rightShooter.set(ControlMode.PercentOutput, percent);
   }
 
   @Override

@@ -38,6 +38,27 @@ def leftRightFlip():
 		[0,0,0,1]
 	])
 
+def getCircleOfBestFitCenter(xList, yList):
+    inputList = []
+    dList = []
+    for i in range(0, len(xList)):
+        inputList.append([xList[i], yList[i], 1])
+        dList.append([(xList[i] ** 2) + (yList[i])])
+    
+    inputMatrix = np.array(inputList)
+    dMatrix = np.array(dList)
+
+    outputMatrix = (np.linalg.pinv(inputMatrix)) @ dMatrix
+
+    xCenter = outputMatrix[0]/2
+    yCenter = outputMatrix[1]/2
+
+    rSquared = outputMatrix[2] - (xCenter ** 2) - (yCenter ** 2)
+    centers = [[xCenter, yCenter, rSquared]]
+
+    return centers 
+
+
 def convertCoordinates(x, y, z):
     input_point = np.array([x, y, z, 1]).T
     transform = getRotZ(pi/2) @ getRotX(pi/2 - cameraElevation) @ leftRightFlip()
@@ -241,140 +262,162 @@ cv2.setTrackbarPos('Higher V', "HSV Tuner", upperV)
 
 # print(adjustedCoordinates)
 
-while True:
-    controlQueue = device.getInputQueue('control')
-    ctrl = depthai.CameraControl()
-    ctrl.setManualExposure(expTime, sensIso)
-    controlQueue.send(ctrl)
+xList = [1, 0, -1, 0]
+yList = [0, 1, 0, -1]
 
-    lowerH = cv2.getTrackbarPos('Lower H', "HSV Tuner")
-    upperH = cv2.getTrackbarPos('Higher H', "HSV Tuner")
+targetCenter = getCircleOfBestFitCenter(xList, yList)
+targetCenterX = targetCenter[0][0]
+# print(targetCenterX)
+targetCenterY = targetCenter[0][1]
+targetRadiusCheck = targetCenter[0][2]
 
-    lowerS = cv2.getTrackbarPos('Lower S', "HSV Tuner")
-    upperS = cv2.getTrackbarPos('Higher S', "HSV Tuner")
+print("X: " + str(targetCenterX) + " Y: " + str(targetCenterY) + " R: " + str(targetRadiusCheck))
 
-    lowerV = cv2.getTrackbarPos('Lower V', "HSV Tuner")
-    upperV = cv2.getTrackbarPos('Higher V', "HSV Tuner")
-    # getImuAngle()
+# while True:
+#     controlQueue = device.getInputQueue('control')
+#     ctrl = depthai.CameraControl()
+#     ctrl.setManualExposure(expTime, sensIso)
+#     controlQueue.send(ctrl)
 
-    inDepth = depthQueue.get() # blocking call, will wait until a new data has arrived
-    inDepthAvg = spatialCalcQueue.get() # blocking call, will wait until a new data has arrived
+#     lowerH = cv2.getTrackbarPos('Lower H', "HSV Tuner")
+#     upperH = cv2.getTrackbarPos('Higher H', "HSV Tuner")
+
+#     lowerS = cv2.getTrackbarPos('Lower S', "HSV Tuner")
+#     upperS = cv2.getTrackbarPos('Higher S', "HSV Tuner")
+
+#     lowerV = cv2.getTrackbarPos('Lower V', "HSV Tuner")
+#     upperV = cv2.getTrackbarPos('Higher V', "HSV Tuner")
+#     # getImuAngle()
+
+#     inDepth = depthQueue.get() # blocking call, will wait until a new data has arrived
+#     inDepthAvg = spatialCalcQueue.get() # blocking call, will wait until a new data has arrived
     
-    depthFrame = inDepth.getFrame()
-    depthFrameColor = cv2.normalize(depthFrame, None, 255, 0, cv2.NORM_INF, cv2.CV_8UC1)
-    depthFrameColor = cv2.equalizeHist(depthFrameColor)
-    depthFrameColor = cv2.applyColorMap(depthFrameColor, cv2.COLORMAP_OCEAN)
+#     depthFrame = inDepth.getFrame()
+#     depthFrameColor = cv2.normalize(depthFrame, None, 255, 0, cv2.NORM_INF, cv2.CV_8UC1)
+#     depthFrameColor = cv2.equalizeHist(depthFrameColor)
+#     depthFrameColor = cv2.applyColorMap(depthFrameColor, cv2.COLORMAP_OCEAN)
 
-    in_rgb = q_rgb.tryGet()
-    if in_rgb is not None:
-        frame = in_rgb.getCvFrame()
-        # print(frame.size)
-    if frame is not None:
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        lowerThreshold = np.array([lowerH, lowerS, lowerV])
-        upperThreshold = np.array([upperH, upperS, upperV])
+#     in_rgb = q_rgb.tryGet()
+#     if in_rgb is not None:
+#         frame = in_rgb.getCvFrame()
+#         # print(frame.size)
+#     if frame is not None:
+#         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+#         lowerThreshold = np.array([lowerH, lowerS, lowerV])
+#         upperThreshold = np.array([upperH, upperS, upperV])
 
-        #check if color in range
-        mask = cv2.inRange(hsv, lowerThreshold, upperThreshold)
+#         #check if color in range
+#         mask = cv2.inRange(hsv, lowerThreshold, upperThreshold)
 
-        result = cv2.bitwise_and(frame, frame, mask = mask)
+#         result = cv2.bitwise_and(frame, frame, mask = mask)
 
-        edges = cv2.Canny(mask, 75, 150)
+#         edges = cv2.Canny(mask, 75, 150)
 
-        contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+#         contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
-        zList = []
-        xList = []
-        yList = []
+#         zList = []
+#         xList = []
+#         yList = []
 
-        for contour in contours:
-            peri = cv2.arcLength(contour, True)
-            approx = cv2.approxPolyDP(contour, 0.04 * peri, True)
-            rotatedRect = cv2.minAreaRect(contour)
-            box = cv2.boxPoints(rotatedRect)
-            boxArray = np.int0(box)
-            topLeftX = boxArray[0][0]
-            topLeftY = boxArray[0][1]
-            bottomRightX = boxArray[1][0]
-            bottomRightY = boxArray[1][1]
-            boxColor = (0,0,255)
+#         for contour in contours:
+#             peri = cv2.arcLength(contour, True)
+#             approx = cv2.approxPolyDP(contour, 0.04 * peri, True)
+#             rotatedRect = cv2.minAreaRect(contour)
+#             box = cv2.boxPoints(rotatedRect)
+#             boxArray = np.int0(box)
+#             topLeftX = boxArray[0][0]
+#             topLeftY = boxArray[0][1]
+#             bottomRightX = boxArray[1][0]
+#             bottomRightY = boxArray[1][1]
+#             boxColor = (0,0,255)
 
-            # cv2.drawContours(depthFrameColor,[boxArray],0,boxColor,2)
-            cv2.drawContours(frame,[boxArray],0,boxColor,2)
+#             # cv2.drawContours(depthFrameColor,[boxArray],0,boxColor,2)
+#             cv2.drawContours(frame,[boxArray],0,boxColor,2)
 
-            topLeft = depthai.Point2f((topLeftX/cameraResolutionWidth), (topLeftY/cameraResolutionHeight))
-            bottomRight = depthai.Point2f((bottomRightX/cameraResolutionWidth), (bottomRightY/cameraResolutionHeight))
+#             topLeft = depthai.Point2f((topLeftX/cameraResolutionWidth), (topLeftY/cameraResolutionHeight))
+#             bottomRight = depthai.Point2f((bottomRightX/cameraResolutionWidth), (bottomRightY/cameraResolutionHeight))
 
-            config.roi = depthai.Rect(topLeft, bottomRight)
-            cfg = depthai.SpatialLocationCalculatorConfig()
-            cfg.addROI(config)
-            # print(cfg)
-            spatialCalcConfigInQueue.send(cfg)
+#             config.roi = depthai.Rect(topLeft, bottomRight)
+#             cfg = depthai.SpatialLocationCalculatorConfig()
+#             cfg.addROI(config)
+#             # print(cfg)
+#             spatialCalcConfigInQueue.send(cfg)
 
-            spatialData = inDepthAvg.getSpatialLocations()
-            roi = spatialData[0].config.roi
-            roi = roi.denormalize(width=depthFrameColor.shape[1], height=depthFrameColor.shape[0])
-            xmin = int(roi.topLeft().x)
-            ymin = int(roi.topLeft().y)
-            xmax = int(roi.bottomRight().x)
-            ymax = int(roi.bottomRight().y)
+#             spatialData = inDepthAvg.getSpatialLocations()
+#             roi = spatialData[0].config.roi
+#             roi = roi.denormalize(width=depthFrameColor.shape[1], height=depthFrameColor.shape[0])
+#             xmin = int(roi.topLeft().x)
+#             ymin = int(roi.topLeft().y)
+#             xmax = int(roi.bottomRight().x)
+#             ymax = int(roi.bottomRight().y)
 
-            cv2.rectangle(depthFrameColor, (xmin, ymin), (xmax, ymax), (0, 0, 0), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX)
+#             cv2.rectangle(depthFrameColor, (xmin, ymin), (xmax, ymax), (0, 0, 0), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX)
 
-            spatialData = inDepthAvg.getSpatialLocations()
-            index = 0
-            for depthData in spatialData:
-                index += 1
-                # print(index)
-                roi = depthData.config.roi
-                roi = roi.denormalize(width=depthFrameColor.shape[1], height=depthFrameColor.shape[0])
-                xmin = int(roi.topLeft().x)
-                ymin = int(roi.topLeft().y)
-                xmax = int(roi.bottomRight().x)
-                ymax = int(roi.bottomRight().y)
+#             spatialData = inDepthAvg.getSpatialLocations()
+#             index = 0
+#             for depthData in spatialData:
+#                 index += 1
+#                 # print(index)
+#                 roi = depthData.config.roi
+#                 roi = roi.denormalize(width=depthFrameColor.shape[1], height=depthFrameColor.shape[0])
+#                 xmin = int(roi.topLeft().x)
+#                 ymin = int(roi.topLeft().y)
+#                 xmax = int(roi.bottomRight().x)
+#                 ymax = int(roi.bottomRight().y)
 
-                zCoordinateCamera = (depthData.spatialCoordinates.z)/25.4
-                yCoordinateCamera = (depthData.spatialCoordinates.y)/25.4
-                xCoordinateCamera = (depthData.spatialCoordinates.x)/25.4
+#                 zCoordinateCamera = (depthData.spatialCoordinates.z)/25.4
+#                 yCoordinateCamera = (depthData.spatialCoordinates.y)/25.4
+#                 xCoordinateCamera = (depthData.spatialCoordinates.x)/25.4
 
-                convertedCoordinates = convertCoordinates(xCoordinateCamera, yCoordinateCamera, zCoordinateCamera)
+#                 convertedCoordinates = convertCoordinates(xCoordinateCamera, yCoordinateCamera, zCoordinateCamera)
 
-                # print("XRAW: " + str(xCoordinateCamera) + " Y: " + str(yCoordinateCamera) + " Z: " + str(zCoordinateCamera))
+#                 # print("XRAW: " + str(xCoordinateCamera) + " Y: " + str(yCoordinateCamera) + " Z: " + str(zCoordinateCamera))
 
-                # print("X: " + str(convertedCoordinates[0]) + " Y: " + str(convertedCoordinates[1]) + " Z: " + str(convertedCoordinates[2]))
+#                 # print("X: " + str(convertedCoordinates[0]) + " Y: " + str(convertedCoordinates[1]) + " Z: " + str(convertedCoordinates[2]))
 
-                if(convertedCoordinates[2] != 0):
-                    zList.append(convertedCoordinates[2])
-                    xList.append(convertedCoordinates[0])
-                    yList.append(convertedCoordinates[1])
+#                 if(convertedCoordinates[2] != 0):
+#                     zList.append(convertedCoordinates[2])
+#                     xList.append(convertedCoordinates[0])
+#                     yList.append(convertedCoordinates[1])
 
-                fontType = cv2.FONT_HERSHEY_TRIPLEX
-                cv2.rectangle(depthFrameColor, (xmin, ymin), (xmax, ymax), color, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX)
-                cv2.putText(depthFrameColor, f"X: {int(depthData.spatialCoordinates.x)} mm", (xmin + 10, ymin + 20), fontType, 0.5, color)
-                cv2.putText(depthFrameColor, f"Y: {int(depthData.spatialCoordinates.y)} mm", (xmin + 10, ymin + 35), fontType, 0.5, color)
-                cv2.putText(depthFrameColor, f"Z: {int(depthData.spatialCoordinates.z)} mm", (xmin + 10, ymin + 50), fontType, 0.5, color)
+#                 fontType = cv2.FONT_HERSHEY_TRIPLEX
+#                 cv2.rectangle(depthFrameColor, (xmin, ymin), (xmax, ymax), color, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX)
+#                 cv2.putText(depthFrameColor, f"X: {int(depthData.spatialCoordinates.x)} mm", (xmin + 10, ymin + 20), fontType, 0.5, color)
+#                 cv2.putText(depthFrameColor, f"Y: {int(depthData.spatialCoordinates.y)} mm", (xmin + 10, ymin + 35), fontType, 0.5, color)
+#                 cv2.putText(depthFrameColor, f"Z: {int(depthData.spatialCoordinates.z)} mm", (xmin + 10, ymin + 50), fontType, 0.5, color)
 
-        zMedian = np.median(zList)
+#         zMedian = np.median(zList)
 
-        for i in range(0, len(zList)):
-            if(abs(zList[i] - zMedian) >= 20):
-                zList.remove(zList[i])
-                xList.remove(xList[i])
-                yList.remove(yList[i])
+#         for i in range(0, len(zList)):
+#             if(abs(zList[i] - zMedian) >= 20):
+#                 zList.remove(zList[i])
+#                 xList.remove(xList[i])
+#                 yList.remove(yList[i])
 
-        for i in range(0, len(zList)):
-            factor = targetHeightDifference/zList[i]
-            zList[i] = zList[i] * factor
-            # xList[i] = xList[i] * factor
-            # yList[i] = yList[i] * factor
+#         # for i in range(0, len(zList)):
+#         #     factor = targetHeightDifference/zList[i]
+#         #     zList[i] = zList[i] * factor
+#         #     # xList[i] = xList[i] * factor
+#         #     # yList[i] = yList[i] * factor
         
-        print(yList)
+#         targetCenter = getCircleOfBestFitCenter(xList, yList)
+#         targetCenterX = targetCenter[0]
+#         targetCenterY = targetCenter[1]
+#         targetRadiusCheck = targetCenter[2]
 
-        cv2.imshow("depth", depthFrameColor)
-        cv2.imshow("frame", frame)
-        # cv2.imshow("mask", result)
+#         if(abs(targetRadiusCheck - 676) > 100):
+#             print("Didn't get correct target")
+#         else:
+#             print("CenterX: " + targetCenterX + "CenterY: " + targetCenterY)       
 
-    # newConfig = False
-    key = cv2.waitKey(1)
-    if key == ord('q'):
-        break
+
+#         # print(yList)
+
+#         cv2.imshow("depth", depthFrameColor)
+#         cv2.imshow("frame", frame)
+#         # cv2.imshow("mask", result)
+
+#     # newConfig = False
+#     key = cv2.waitKey(1)
+#     if key == ord('q'):
+#         break

@@ -21,6 +21,10 @@ public class LinearActuator extends SubsystemBase {
     setDefaultCommand(new LinearActuatorDefault(this));
   }
 
+  public double getActuatorPosition() {
+    return rightLinearActuator.getPosition();
+  }
+
   public void setActuator(double target){
     rightLinearActuator.setPosition(target);
     leftLinearActuator.setPosition(target);

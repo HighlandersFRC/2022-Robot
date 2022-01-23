@@ -162,16 +162,21 @@ public class Robot extends TimedRobot {
     // OI.driverB.whenPressed(new DriveForward(drive, 2, false));
 
     OI.driverRT.whileHeld(new IntakeBalls(intake));
-    OI.driverB.whileHeld(new IntakeUp(intake));
+    OI.driverLT.whileHeld(new EjectBalls(feeder, 0.4));
+    // OI.driverB.whileHeld(new IntakeUp(intake));
 
     OI.driverA.whenPressed(new SetHoodPosition(linearActuator, 0.2));
     OI.driverB.whenPressed(new SetHoodPosition(linearActuator, 0.4));
-    OI.driverY.whenPressed(new SetHoodPosition(linearActuator, 0.6));
+    OI.driverY.whenPressed(new SetHoodPosition(linearActuator, 0.95));
+
     OI.driverX.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator));
+
+    // OI.driverB.whileHeld(new SpinShooter(shooter, 0.5));
+
     OI.driverX.whenReleased(new SetHoodPosition(linearActuator, 0));
     OI.driverX.whenReleased(new EjectBalls(feeder, 0));
     OI.driverX.whenReleased(new SpinShooter(shooter, 0));
-    
+
 
   }
 

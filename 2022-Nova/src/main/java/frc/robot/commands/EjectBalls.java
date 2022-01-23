@@ -28,6 +28,8 @@ public class EjectBalls extends CommandBase {
   @Override
   public void execute() {
     feeder.setUpperFalcon(feederPercent);
+    feeder.setLowerFalcon(feederPercent);
+    feeder.setBeltFalcon(feederPercent);
   }
 
   // Called once the command ends or is interrupted.

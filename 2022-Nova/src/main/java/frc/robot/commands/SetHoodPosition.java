@@ -35,6 +35,9 @@ public class SetHoodPosition extends CommandBase {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return false;
+    // if(Math.abs(linearActuator.getActuatorPosition() - target) < 0.05) {
+    //   return true;
+    // }
+    return true;
   }
 }

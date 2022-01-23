@@ -12,11 +12,11 @@ public class PneumaticsControl {
     private final DoubleSolenoid intakeSolenoid = new DoubleSolenoid(PneumaticsModuleType.REVPH, 6, 7);
 
     public void setIntakeUp() {
-        intakeSolenoid.set(Value.kForward);
+        intakeSolenoid.set(Value.kReverse);
     }
 
     public void setIntakeDown() {
-        intakeSolenoid.set(Value.kReverse);
+        intakeSolenoid.set(Value.kForward);
     }
 
 }

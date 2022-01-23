@@ -6,6 +6,7 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.LinearActuator;
@@ -22,10 +23,11 @@ public class FireBalls extends SequentialCommandGroup {
     addRequirements(intake, feeder, shooter, linearActuator);
     addCommands(
       new ParallelCommandGroup(
-          new SpinShooter(shooter, 0.3),
-          new SetHoodPosition(linearActuator, 0.4)
+          new SpinShooter(shooter, 0.5),
+          new SetHoodPosition(linearActuator, 0.95)
       ),
-      new EjectBalls(feeder, 0.3)
+      new WaitCommand(1),
+      new EjectBalls(feeder, 0.7)
     );
   }
 }

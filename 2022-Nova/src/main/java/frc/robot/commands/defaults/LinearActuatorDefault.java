@@ -23,7 +23,7 @@ public class LinearActuatorDefault extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    linearActuator.setActuator(0);
+    linearActuator.setActuator(0.95);
   }
 
   // Called once the command ends or is interrupted.

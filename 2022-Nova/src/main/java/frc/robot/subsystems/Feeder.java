@@ -5,6 +5,7 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -20,6 +21,7 @@ public class Feeder extends SubsystemBase {
     public Feeder() {}
 
     public void init() {
+        upperFalcon.setInverted(InvertType.InvertMotorOutput);
         setDefaultCommand(new FeederDefault(this));
     }
 
@@ -28,7 +30,7 @@ public class Feeder extends SubsystemBase {
     }
 
     public void setLowerFalcon(double percent) {
-        lowerFalcon.set(ControlMode.PercentOutput, percent);
+        lowerFalcon.set(ControlMode.PercentOutput, -percent);
     }
 
     public void setUpperFalcon(double percent) {

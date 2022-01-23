@@ -12,6 +12,7 @@ public class FeederDefault extends CommandBase {
   private Feeder feeder;
   public FeederDefault(Feeder feeder) {
     this.feeder = feeder;
+    addRequirements(feeder);
     // Use addRequirements() here to declare subsystem dependencies.
   }
 
