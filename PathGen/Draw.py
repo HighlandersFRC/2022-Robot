@@ -630,12 +630,19 @@ class Draw:
 
         timeDif2 = p3.time - p2.time
         t2 = (timeDif2 * (1 - interpFactor)) + p2.time
+
+        timeRatio = (p2.time - p1.time) / (p3.time - p2.time)
         
 
         v1X = (p2.x - p1.x) / (timeDif1)
         v1Y = (p2.y - p1.y) / (timeDif1)
         v2X = (p3.x - p2.x) / (timeDif2)
         v2Y = (p3.y - p2.y) / (timeDif2)
+
+        # print(f"v1X {v1X}")
+        # print(f"v2X {v2X}")
+        # print(f"v1Y {v1Y}")
+        # print(f"v2Y {v2Y}")
 
         #If on the line segment between previous point and current point
         if time < t1:
@@ -657,8 +664,8 @@ class Draw:
             interpTime = time - t1
 
             #Calculate accelerations
-            accelX = (v2X - v1X) / (t2 - t1)
-            accelY = (v2Y - v1Y) / (t2 - t1)
+            accelX = ((v2X - v1X)) / ((t2 - t1) * ())
+            accelY = ((v2Y - v1Y)) / ((t2 - t1) * ())
 
             #Determine point at t1
             t1X = (v1X * (t1 - p1.time)) + p1.x
