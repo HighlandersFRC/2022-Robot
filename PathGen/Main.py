@@ -88,8 +88,11 @@ while running:
                     selectedPoint = None
                     if fileName == None:
                         fileName = "Path-1"
-                    fileName = fileName.rstrip(".json")
-                    fileName = fileName.lstrip("json-paths/\\")
+                        draw.setMsg("No path found")
+                    else:
+                        draw.setMsg("Path opened", (15, 168, 30))
+                    fileName = fileName.removesuffix(".json")
+                    fileName = fileName.removeprefix("json-paths\\")
                 if selectedPoint != None:
                     Point.saveSelectedPoint(selectedPoint, fieldWidth, fieldHeight)                 
                 editorString = ''

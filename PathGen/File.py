@@ -53,5 +53,6 @@ def getSave(fileName, fieldWidth, fieldHeight):
                 for x in range(len(newPoints)):
                     newPoints[x].index = x
             Point.setPoints(newPoints)
+            #print(save)
             return save
     return None
