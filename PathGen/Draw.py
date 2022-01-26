@@ -626,10 +626,13 @@ class Draw:
         interpFactor = p2.interpolationRange
 
         timeDif1 = p2.time - p1.time
-        t1 = (timeDif1 * interpFactor) + p1.time
 
         timeDif2 = p3.time - p2.time
-        t2 = (timeDif2 * (1 - interpFactor)) + p2.time
+
+        tau = min(timeDif1, timeDif2)
+
+        t1 = p2.time - (1 - interpFactor) * tau
+        t2 = p2.time + (1 - interpFactor) * tau
 
         timeRatio = (p2.time - p1.time) / (p3.time - p2.time)
         
@@ -664,8 +667,8 @@ class Draw:
             interpTime = time - t1
 
             #Calculate accelerations
-            accelX = ((v2X - v1X)) / ((t2 - t1) * ())
-            accelY = ((v2Y - v1Y)) / ((t2 - t1) * ())
+            accelX = ((v2X - v1X)) / ((t2 - t1))
+            accelY = ((v2Y - v1Y)) / ((t2 - t1))
 
             #Determine point at t1
             t1X = (v1X * (t1 - p1.time)) + p1.x
