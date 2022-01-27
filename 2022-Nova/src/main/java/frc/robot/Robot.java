@@ -72,6 +72,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
+    // System.out.println("###########");
     drive.init();
     peripherals.init();
     intake.init();
@@ -84,7 +85,7 @@ public class Robot extends TimedRobot {
     m_robotContainer = new RobotContainer();
 
     try {
-      pathingFile = new File("/home/lvuser/deploy/Om.json");
+      pathingFile = new File("/home/lvuser/deploy/3BallAuto.json");
       FileReader scanner = new FileReader(pathingFile);
       pathJSON = new JSONArray(new JSONTokener(scanner));
     }
@@ -95,11 +96,10 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotPeriodic() {
-    SmartDashboard.putNumber("Navx Value", peripherals.getNavxAngle());
+    // SmartDashboard.putNumber("Navx Value", peripherals.getNavxAngle());
+    System.out.println("^^^^^^^^^^^^^^^^^^^ " + drive.getOdometryAngle());
     CommandScheduler.getInstance().run();
-
-    
-      
+    System.out.println(">>>>>>>>>>>>>>>>>>> " + drive.getOdometryAngle());
     }
   
 
@@ -127,7 +127,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     drive.autoInit(pathJSON);
-    peripherals.init();
+    // peripherals.init();
     testPath = new ContinuousAccelerationInterpolation(drive, pathJSON);
     testPath.schedule();
   }

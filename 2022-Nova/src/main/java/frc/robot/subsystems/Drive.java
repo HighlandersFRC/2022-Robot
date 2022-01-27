@@ -123,13 +123,15 @@ public class Drive extends SubsystemBase {
         leftBack.init();
         rightBack.init();
         rightFront.init();
-        peripherals.zeroNavx();
+        // peripherals.zeroNavx();
 
         setDefaultCommand(new DriveDefault(this));
     }
 
     public void autoInit(JSONArray pathPoints) {
-        m_odometry.resetPosition(new Pose2d(new Translation2d(pathPoints.getJSONObject(0).getDouble("x"), pathPoints.getJSONObject(0).getDouble("y")), new Rotation2d()), new Rotation2d());
+        peripherals.setNavxAngle(pathPoints.getJSONObject(0).getDouble("angle"));
+        System.out.println("|||||| Angle Set to: " + Math.toDegrees(peripherals.getNavxAngle()));
+        m_odometry.resetPosition(new Pose2d(new Translation2d(pathPoints.getJSONObject(0).getDouble("x"), pathPoints.getJSONObject(0).getDouble("y")),  new Rotation2d(peripherals.getNavxAngle())), new Rotation2d(peripherals.getNavxAngle()));
     }
 
     public double getOdometryX() {
@@ -144,6 +146,10 @@ public class Drive extends SubsystemBase {
         return m_odometry.getPoseMeters().getRotation().getRadians();
     }
 
+    public void updateOdometry(double navxOffset) {
+        m_pose = m_odometry.update(new Rotation2d(Math.toRadians(-navxOffset)), leftFront.getState(Math.toRadians(-navxOffset)), rightFront.getState(Math.toRadians(-navxOffset)), leftBack.getState(Math.toRadians(-navxOffset)), rightBack.getState(Math.toRadians(-navxOffset)));
+    }
+
     // method to actually run swerve code
     public void teleopDrive() {
         double turnLimit = 1;
@@ -151,8 +157,8 @@ public class Drive extends SubsystemBase {
         double originalX = -OI.getDriverLeftY();
         double originalY = -OI.getDriverLeftX();
 
-        System.out.println("Original X: " + originalX);
-        System.out.println("Original Y: " + originalY);
+        // System.out.println("Original X: " + originalX);
+        // System.out.println("Original Y: " + originalY);
 
         if(Math.abs(originalX) < 0.05) {
             originalX = 0;
@@ -183,6 +189,8 @@ public class Drive extends SubsystemBase {
         // leftBack.testDrive();
         // rightBack.testDrive();
 
+        System.out.println(peripherals.getNavxAngle());
+
         rightFront.postDriveMotorTics();
 
         // System.out.println(m_odometry.getPoseMeters());
@@ -190,9 +198,10 @@ public class Drive extends SubsystemBase {
     }
 
     public void autoDrive(Vector velocityVector, double turnRadiansPerSec) {
-        double navxOffset = peripherals.getNavxAngle();
+        double navxOffset = Math.toRadians(peripherals.getNavxAngle());
+        System.out.println("--------------" + Math.toDegrees(getOdometryAngle()));
 
-        m_pose = m_odometry.update(new Rotation2d(Math.toRadians(-navxOffset)), leftFront.getState(Math.toRadians(-navxOffset)), rightFront.getState(Math.toRadians(-navxOffset)), leftBack.getState(Math.toRadians(-navxOffset)), rightBack.getState(Math.toRadians(navxOffset)));
+        m_pose = m_odometry.update(new Rotation2d(Math.toRadians(-navxOffset)), leftFront.getState(Math.toRadians(-navxOffset)), rightFront.getState(Math.toRadians(-navxOffset)), leftBack.getState(Math.toRadians(-navxOffset)), rightBack.getState(Math.toRadians(-navxOffset)));
 
         // System.out.println(m_odometry.getPoseMeters() + "Angle: " + getOdometryAngle());
 
