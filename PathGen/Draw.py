@@ -2,7 +2,7 @@ import math
 from functools import cache
 import Point
 import Convert
-import File
+from File import File
 import colorsys
 import hashlib
 
@@ -29,6 +29,12 @@ class Draw:
         self.upperAccelBound = 9.8
         self.upperVelocBound = 5
         self.points = points
+        self.wheels = []
+        self.samplePeriod = 0.01
+        self.file = File()
+
+    def getFile(self):
+        return self.file
 
     def setTotalTime(self, time):
         if time > 0.0:
@@ -69,7 +75,7 @@ class Draw:
             if Convert.getDist(mousePosPixels[0], mousePosPixels[1], point.pixelX, point.pixelY) < 4 or point.color == (0, 0, 255):
                 radius = 6
             #self.pygame.draw.line(self.screen, (255, 0, 0), (prevX, prevY), (point.pixelX, point.pixelY), 3)
-            self.drawConstAccelPath(0.01)
+            self.drawConstAccelPath()
             prevX = point.pixelX
             prevY = point.pixelY
             self.pygame.draw.line(self.screen, (0, 255, 0), (point.pixelX - 1, point.pixelY - 1), (20 * math.cos((math.pi * 2) - point.angle) + point.pixelX - 1, 20 * math.sin((math.pi * 2) - point.angle) + point.pixelY - 1), 2)
@@ -338,8 +344,9 @@ class Draw:
         #Upload path
         if x >= 1050 + self.xOffset and x <= 1150 + self.xOffset and y >= 100 and y <= 150:
             bool = Point.savePath(fileName)
+            self.file.connect()
             try:
-                File.uploadFile('json-paths/' + fileName + '.json')
+                self.file.uploadFile('json-paths/' + fileName + '.json')
                 self.setMsg('Uploaded Path', (15, 168, 30))
             except:
                 if not bool:
@@ -350,16 +357,18 @@ class Draw:
         #Upload all paths
         if x >= 1050 + self.xOffset and x <= 1150 + self.xOffset and y >= 200 and y <= 250:
             Point.savePath(fileName)
+            self.file.connect()
             try:
-                File.uploadAll()
+                self.file.uploadAll()
                 self.setMsg('Uploaded All Paths', (15, 168, 30))
             except:
                 self.setMsg('Upload All Failed')
 
         #Download all paths
         if x >= 1050 + self.xOffset and x <= 1150 + self.xOffset and y >= 300 and y <= 350:
+            self.file.connect()
             try:
-                File.downloadAll()
+                self.file.downloadAll()
                 self.setMsg('Downloaded All Paths', (15, 168, 30))
             except:
                 self.setMsg('Download Failed')
@@ -376,7 +385,7 @@ class Draw:
             self.colorAccel = False
             self.colorVeloc = not self.colorVeloc
 
-    def drawConstAccelPath(self, samplePeriod):
+    def drawConstAccelPath(self):
         time = self.points[0].time
         endTime = self.points[-1].time
         val = ''
@@ -389,10 +398,10 @@ class Draw:
             pixelPosList = list(Convert.getPixelPos(x) for x in posList)
 
             if self.showWheelPaths:
-                self.drawWheelColors(posList[1], posList[2], posList[3], posList[4], samplePeriod)
+                self.drawWheelColors(posList[1], posList[2], posList[3], posList[4], self.samplePeriod)
             self.pygame.draw.circle(self.screen, (255, 0, 0), pixelPosList[0], 1)
 
-            time += samplePeriod
+            time += self.samplePeriod
 
     def drawWheelColors(self, fL, fR, bL, bR, samplePeriod):
         flColor = (255, 0, 255)
@@ -512,6 +521,12 @@ class Draw:
         self.wheelList[1] = self.wheelList[0]
         self.wheelList[0] = wheels
 
+    def optimizePathTimes(self):
+        pass
+
+    def updateWheelList(self, wheels, time):
+        listLength = self.points[-1].time / time
+
     @cache
     def getWheelsAtPoint(self, center, angle):
         pi = math.pi
@@ -537,8 +552,7 @@ class Draw:
         pi = math.pi
         currentPointIndex = 0
         lowestTimeDiff = 0
-
-        tempAngle = 0
+        wheels = []
 
         timeDiffArray = []
 
@@ -584,12 +598,14 @@ class Draw:
         #If time is past last point
         if time >= self.points[-1].time:
             p = self.points[-1]
-            return self.getWheelsAtPoint((p.x, p.y), p.angle)
+            wheels = self.getWheelsAtPoint((p.x, p.y), p.angle)
+            return wheels
 
         #If time is before first point
         if time < self.points[0].time:
             p = self.points[0]
-            return self.getWheelsAtPoint((p.x, p.y), p.angle)
+            wheels = self.getWheelsAtPoint((p.x, p.y), p.angle)
+            return wheels
 
         currentPoint = self.points[currentPointIndex]
 
@@ -604,7 +620,8 @@ class Draw:
             x = p2.x + (vX * (time - p2.time))
             y = p2.y + (vY * (time - p2.time))
 
-            return self.getWheelsAtPoint((x, y), wheelTheta)
+            wheels = self.getWheelsAtPoint((x, y), wheelTheta)
+            return wheels
 
         #If current point is the first point
         if currentPointIndex == 0:
@@ -617,7 +634,8 @@ class Draw:
             x = p1.x + (vX * (time - p1.time))
             y = p1.y + (vY * (time - p1.time))
 
-            return self.getWheelsAtPoint((x, y), wheelTheta)
+            wheels = self.getWheelsAtPoint((x, y), wheelTheta)
+            return wheels
 
         p1 = self.points[currentPointIndex - 1]
         p2 = currentPoint
@@ -653,14 +671,16 @@ class Draw:
             x = p1.x + (v1X * (time - p1.time))
             y = p1.y + (v1Y * (time - p1.time))
 
-            return self.getWheelsAtPoint((x, y), wheelTheta)
+            wheels = self.getWheelsAtPoint((x, y), wheelTheta)
+            return wheels
 
         #If on the line segment between current point and next point
         if time >= t2:
 
             x = p2.x + (v2X * (time - p2.time))
             y = p2.y + (v2Y * (time - p2.time))
-            return self.getWheelsAtPoint((x, y), wheelTheta)
+            wheels = self.getWheelsAtPoint((x, y), wheelTheta)
+            return wheels
 
         #If inside the interpolation range
         if time >= t1 and time < t2:
@@ -677,4 +697,5 @@ class Draw:
             x = ((accelX / 2) * (interpTime ** 2)) + (v1X * interpTime) + t1X
             y = ((accelY / 2) * (interpTime ** 2)) + (v1Y * interpTime) + t1Y
 
-            return self.getWheelsAtPoint((x, y), wheelTheta)
+            wheels = self.getWheelsAtPoint((x, y), wheelTheta)
+            return wheels

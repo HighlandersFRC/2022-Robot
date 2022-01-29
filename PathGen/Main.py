@@ -84,7 +84,7 @@ while running:
             if event.key == pygame.K_RETURN:
                 selectedPoint.angle = selectedPoint.angle % 360
                 if selectedValue == 7:
-                    fileName = File.getSave(saveName, fieldWidth, fieldHeight)
+                    fileName = draw.getFile().getSave(saveName, fieldWidth, fieldHeight)
                     selectedPoint = None
                     if fileName == None:
                         fileName = "Path-1"
