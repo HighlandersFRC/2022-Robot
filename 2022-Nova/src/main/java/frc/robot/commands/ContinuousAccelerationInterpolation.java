@@ -78,7 +78,7 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
 
       currentX = drive.getOdometryX();
       currentY = drive.getOdometryY();
-      currentTheta = drive.getOdometryAngle();
+      currentTheta = drive.getPeripheralsAngle();
 
       previousX = currentX;
       previousY = currentY;
@@ -99,7 +99,7 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     // get odometry positions
     currentX = drive.getOdometryX();
     currentY = drive.getOdometryY();
-    currentTheta = drive.getOdometryAngle();
+    currentTheta = drive.getPeripheralsAngle();
 
     currentTime = Timer.getFPGATimestamp() - initTime;
     timeDiff = currentTime - previousTime;
@@ -128,7 +128,7 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     Vector velocityVector = new Vector(desiredVelocityArray[0], desiredVelocityArray[1]);
     desiredThetaChange = desiredVelocityArray[2];
 
-    System.out.println("@@@@@@@@@@@ " + Math.toDegrees(drive.getOdometryAngle()));
+    // System.out.println("@@@@@@@@@@@ " + Math.toDegrees(peripherals.getNavxAngle());
 
     // call autoDrive function to move the robot
     drive.autoDrive(velocityVector, desiredThetaChange);

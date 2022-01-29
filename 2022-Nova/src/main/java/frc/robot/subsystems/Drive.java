@@ -72,9 +72,6 @@ public class Drive extends SubsystemBase {
     m_frontLeftLocation, m_frontRightLocation, m_backLeftLocation, m_backRightLocation
     );
 
-    // Creating my odometry object from the kinematics object. Here,
-    // our starting pose is 5 meters along the long end of the field and in the
-    // center of the field along the short end, facing forward.
     SwerveDriveOdometry m_odometry; 
     Pose2d m_pose;
 
@@ -146,6 +143,10 @@ public class Drive extends SubsystemBase {
         return m_odometry.getPoseMeters().getRotation().getRadians();
     }
 
+    public double getPeripheralsAngle() {
+        return -(peripherals.getNavxAngle());
+    }
+
     public void updateOdometry(double navxOffset) {
         m_pose = m_odometry.update(new Rotation2d(Math.toRadians(-navxOffset)), leftFront.getState(Math.toRadians(-navxOffset)), rightFront.getState(Math.toRadians(-navxOffset)), leftBack.getState(Math.toRadians(-navxOffset)), rightBack.getState(Math.toRadians(-navxOffset)));
     }
@@ -177,7 +178,8 @@ public class Drive extends SubsystemBase {
 
         Vector controllerVector = new Vector(xSpeed, ySpeed);
 
-        m_pose = m_odometry.update(new Rotation2d(Math.toRadians(navxOffset)), leftFront.getState(Math.toRadians(navxOffset)), rightFront.getState(Math.toRadians(navxOffset)), leftBack.getState(Math.toRadians(navxOffset)), rightBack.getState(Math.toRadians(navxOffset)));
+        System.out.println("NAVX: " + peripherals.getNavxAngle());
+        m_pose = m_odometry.update(new Rotation2d(Math.toRadians(-navxOffset)), leftFront.getState(Math.toRadians(-navxOffset)), rightFront.getState(Math.toRadians(-navxOffset)), leftBack.getState(Math.toRadians(-navxOffset)), rightBack.getState(Math.toRadians(-navxOffset)));
 
         leftFront.velocityDrive(controllerVector, turn, navxOffset);
         rightFront.velocityDrive(controllerVector, turn, navxOffset);
@@ -189,21 +191,23 @@ public class Drive extends SubsystemBase {
         // leftBack.testDrive();
         // rightBack.testDrive();
 
-        System.out.println(peripherals.getNavxAngle());
+        // System.out.println(peripherals.getNavxAngle());
 
         rightFront.postDriveMotorTics();
 
-        // System.out.println(m_odometry.getPoseMeters());
+        System.out.println(m_odometry.getPoseMeters());
         // System.out.println("Rate: " + peripherals.getNavxRate());
     }
 
     public void autoDrive(Vector velocityVector, double turnRadiansPerSec) {
-        double navxOffset = Math.toRadians(peripherals.getNavxAngle());
-        System.out.println("--------------" + Math.toDegrees(getOdometryAngle()));
+        double navxOffset = (peripherals.getNavxAngle());
+        // System.out.println("OFFSET IN AUTODRIVE: " + Math.toDegrees(navxOffset));
+        System.out.println("NAVX ANGLE: " + Math.toDegrees(peripherals.getNavxAngle()));
 
-        m_pose = m_odometry.update(new Rotation2d(Math.toRadians(-navxOffset)), leftFront.getState(Math.toRadians(-navxOffset)), rightFront.getState(Math.toRadians(-navxOffset)), leftBack.getState(Math.toRadians(-navxOffset)), rightBack.getState(Math.toRadians(-navxOffset)));
+        // m_pose = m_odometry.update(new Rotation2d(Math.toRadians(-navxOffset)), leftFront.getState(Math.toRadians(-navxOffset)), rightFront.getState(Math.toRadians(-navxOffset)), leftBack.getState(Math.toRadians(-navxOffset)), rightBack.getState(Math.toRadians(-navxOffset)));
+        m_pose = m_odometry.update(new Rotation2d(-navxOffset), leftFront.getState(-navxOffset), rightFront.getState(-navxOffset), leftBack.getState(-navxOffset), rightBack.getState(-navxOffset));
 
-        // System.out.println(m_odometry.getPoseMeters() + "Angle: " + getOdometryAngle());
+        System.out.println(m_odometry.getPoseMeters());
 
         leftFront.velocityDrive(velocityVector, turnRadiansPerSec, navxOffset);
         rightFront.velocityDrive(velocityVector, turnRadiansPerSec, navxOffset);
@@ -336,13 +340,16 @@ public class Drive extends SubsystemBase {
 
         // calculate difference in times between current point and previous point
         double timeDiffT1 = (currentPointTime - previousPointTime);
-        // t1 is the point at which the robot will start a curved trajectory towards the next line segment (based on interpolation range)
-        double t1 = (timeDiffT1 * turnTimePercent) + previousPointTime;
-
         // calculate the difference in times between next point and current point
         double timeDiffT2 = nextPointTime - currentPointTime;
+
+        double minTimeDiff = Math.min(timeDiffT1, timeDiffT2);
+
+        // t1 is the point at which the robot will start a curved trajectory towards the next line segment (based on interpolation range)
+        double t1 = (minTimeDiff * turnTimePercent) + previousPointTime;
+
         // t2 is the point at which the robot will end its curved trajectory towards the next line segment (based on interpolation range)
-        double t2 = (timeDiffT2 * (1 - turnTimePercent)) + currentPointTime;
+        double t2 = (minTimeDiff * (1 - turnTimePercent)) + currentPointTime;
 
         // if on a line segment between previous point and current point
         if(time < t1) {

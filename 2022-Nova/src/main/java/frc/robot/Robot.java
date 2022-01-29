@@ -85,7 +85,7 @@ public class Robot extends TimedRobot {
     m_robotContainer = new RobotContainer();
 
     try {
-      pathingFile = new File("/home/lvuser/deploy/3BallAuto.json");
+      pathingFile = new File("/home/lvuser/deploy/RotateTest.json");
       FileReader scanner = new FileReader(pathingFile);
       pathJSON = new JSONArray(new JSONTokener(scanner));
     }
@@ -97,9 +97,10 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     // SmartDashboard.putNumber("Navx Value", peripherals.getNavxAngle());
-    System.out.println("^^^^^^^^^^^^^^^^^^^ " + drive.getOdometryAngle());
+    // System.out.println("^^^^^^^^^^^^^^^^^^^ " + drive.getOdometryAngle());
     CommandScheduler.getInstance().run();
-    System.out.println(">>>>>>>>>>>>>>>>>>> " + drive.getOdometryAngle());
+    // System.out.println(">>>>>>>>>>>>>>>>>>> " + drive.getOdometryAngle());
+    // System.out.println(Math.toDegrees(peripherals.getNavxAngle()));
     }
   
 
@@ -165,9 +166,9 @@ public class Robot extends TimedRobot {
     OI.driverLT.whileHeld(new EjectBalls(feeder, 0.4));
     // OI.driverB.whileHeld(new IntakeUp(intake));
 
-    OI.driverA.whenPressed(new SetHoodPosition(linearActuator, 0.2));
-    OI.driverB.whenPressed(new SetHoodPosition(linearActuator, 0.4));
-    OI.driverY.whenPressed(new SetHoodPosition(linearActuator, 0.95));
+    OI.driverA.whileHeld(new SetHoodPosition(linearActuator, 0.2));
+    OI.driverB.whileHeld(new SetHoodPosition(linearActuator, 0.4));
+    OI.driverY.whileHeld(new SetHoodPosition(linearActuator, 0.95));
 
     OI.driverX.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator));
 
