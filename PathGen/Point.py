@@ -83,6 +83,9 @@ def savePath(fileName):
         return True
     return False
 
+def clearPoints():
+    points.clear()
+
 def updatePointTimes():
     totalTime = 0
     for i in range(len(points)):

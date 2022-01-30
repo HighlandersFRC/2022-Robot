@@ -1,3 +1,4 @@
+from select import select
 import pygame
 import File
 import math
@@ -45,7 +46,9 @@ while running:
             selectedPoint = Point.clicked(Convert.getFieldPos(pygame.mouse.get_pos()), fieldWidth, fieldHeight, pygame, selectedPoint, newScreenWidth, draw)
             if selectedPoint != None:
                 selectedPoint = draw.clickedInfo(selectedPoint, fileName)
-            draw.uploadButtons(fileName)
+            command = draw.uploadButtons(fileName)
+            if command == 'cleared':
+                selectedPoint = None
         
         if event.type == pygame.KEYDOWN:
             if selectedPoint != None:

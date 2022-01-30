@@ -173,6 +173,13 @@ class Draw:
                 c = tuple(255 * x for x in c)
                 self.pygame.draw.line(self.screen, c, (1499, 282 + i), (1545, 282 + i), 1)
 
+        #Delete all button
+        self.pygame.draw.rect(self.screen, (255, 0, 0), (975 + self.xOffset, 300, 50, 50))
+        delAll1 = self.font.render("DEL", True, (0, 0, 0))
+        delAll2 = self.font.render("ALL", True, (0, 0, 0))
+        self.screen.blit(delAll1, (979 + self.xOffset, 303))
+        self.screen.blit(delAll2, (979 + self.xOffset, 325))
+
         #Toggle path button
         if self.showWheelPaths:
             wheelColor = (0, 255, 0)
@@ -340,6 +347,7 @@ class Draw:
     def uploadButtons(self, fileName):
         x = self.pygame.mouse.get_pos()[0]
         y = self.pygame.mouse.get_pos()[1]
+        command = ''
 
         #Upload path
         if x >= 1050 + self.xOffset and x <= 1150 + self.xOffset and y >= 100 and y <= 150:
@@ -377,6 +385,11 @@ class Draw:
         if x >= 975 + self.xOffset and x <= 1025 + self.xOffset and y >= 225 and y <= 275:
             self.showWheelPaths = not self.showWheelPaths
 
+        #Delete all points
+        if x >= 975 + self.xOffset and x <= 1150 + self.xOffset and y >= 300 and y <= 350:
+            Point.clearPoints()
+            command = 'cleared'
+
         #Color acceleration and velocity buttons
         if x >= 1475 and x <= 1545 and y >= 130 and y <= 180:
             self.colorAccel = not self.colorAccel
@@ -384,6 +397,8 @@ class Draw:
         if x >= 1475 and x <= 1545 and y >= 200 and y <= 250:
             self.colorAccel = False
             self.colorVeloc = not self.colorVeloc
+
+        return command
 
     def drawConstAccelPath(self):
         time = self.points[0].time
