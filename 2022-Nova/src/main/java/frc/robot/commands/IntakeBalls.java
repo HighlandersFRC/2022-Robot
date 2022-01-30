@@ -28,21 +28,19 @@ public class IntakeBalls extends CommandBase {
   public void execute() {
     intakeFeeder.setIntakeDown();
     intakeFeeder.setIntakePercent(-0.4);
+    intakeFeeder.setBeltFalcon(0.2);
 
     if (!intakeFeeder.getTopBeamBreak()) {
       if (!intakeFeeder.getBottomBeamBreak()) {
         if (Timer.getFPGATimestamp() - time >= 0.2) {
           intakeFeeder.setLowerFalcon(0);
-          intakeFeeder.setBeltFalcon(0);
           intakeFeeder.setBallCount(2);
         }
       } else {
         time = Timer.getFPGATimestamp();
         if (intakeFeeder.getBallCount() < 2) {
-          intakeFeeder.setBeltFalcon(0.2);
           intakeFeeder.setLowerFalcon(0.2);
         }
-        intakeFeeder.setBeltFalcon(0);
         intakeFeeder.setLowerFalcon(0);
       }
     } else {
