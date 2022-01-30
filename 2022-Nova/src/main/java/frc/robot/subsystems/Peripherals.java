@@ -25,6 +25,7 @@ public class Peripherals extends SubsystemBase {
   }
 
   public void init() {
+    System.out.print("INSIDE PERIPHERALS INIT");
     zeroNavx();
     setDefaultCommand(new PeripheralsDefault(this));
   }
@@ -59,6 +60,10 @@ public class Peripherals extends SubsystemBase {
 
   public double getNavxRate() {
     return navx.getAngleRate();
+  }
+
+  public void setNavxAngle(double angle) {
+    navx.setNavxAngle(angle);
   }
 
   @Override

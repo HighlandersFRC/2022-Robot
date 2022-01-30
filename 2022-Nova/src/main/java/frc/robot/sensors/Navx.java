@@ -81,6 +81,10 @@ public class Navx {
       originalAngle = originalAngle - angle;
   }
 
+//   public void setNavxAngle(double angle) {
+//     originalAngle = originalAngle - angle;
+//     }
+
   public void softResetYaw() {
       originalYaw = imu.getYaw();
   }

@@ -9,6 +9,7 @@ import java.util.Scanner;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.Drive;
+import frc.robot.subsystems.Peripherals;
 import frc.robot.tools.math.Vector;
 
 import org.json.JSONArray;
@@ -53,6 +54,8 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     private double[] desiredVelocityArray = new double[3];
     private double desiredThetaChange = 0;
 
+    // private Peripherals peripherals = new Peripherals();
+
     private double cyclePeriod = 1.0/50.0;
 
     public ContinuousAccelerationInterpolation(Drive drive, JSONArray path) {
@@ -67,22 +70,26 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     public void initialize() {
       estimatedX = drive.getOdometryX();
       estimatedY = drive.getOdometryY();
+      estimatedTheta = drive.getOdometryAngle();
 
       previousEstimateX = estimatedX;
       previousEstimateY = estimatedY;
+      previousEstimateTheta = estimatedTheta;
 
       currentX = drive.getOdometryX();
       currentY = drive.getOdometryY();
+      currentTheta = drive.getOdometryAngle();
 
       previousX = currentX;
       previousY = currentY;
+      previousTheta = currentTheta;
 
       averagedX = (estimatedX + currentX)/2;
       averagedY = (estimatedY + currentY)/2;
       averagedTheta = (estimatedTheta + currentTheta)/2;
 
       initTime = Timer.getFPGATimestamp();
-      System.out.println("Time: " + currentTime + " OdometryX: " + currentX + " PredictedX: " + estimatedX + " OdometryY: " + currentY + " PredictedY: " + estimatedY);
+      System.out.println("Time: " + currentTime + " Angle: " + drive.getOdometryAngle() + " OdometryX: " + currentX + " PredictedX: " + estimatedX + " OdometryY: " + currentY + " PredictedY: " + estimatedY);
 
     }
 
@@ -112,7 +119,7 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     averagedY = (estimatedY + currentY)/2;
     averagedTheta = (estimatedTheta + currentTheta)/2;
 
-    System.out.println("Time: " + currentTime + " OdometryX: " + currentX + " PredictedX: " + estimatedX + " OdometryY: " + currentY + " PredictedY: " + estimatedY);
+    // System.out.println("Time: " + currentTime + " Angle: " + Math.toDegrees(currentTheta) + " OdometryX: " + currentX + " PredictedX: " + estimatedX + " OdometryY: " + currentY + " PredictedY: " + estimatedY);
 
     // call ConstantAccelerationInterpolation function
     desiredVelocityArray = drive.constantAccelerationInterpolation(averagedX, averagedY, averagedTheta, currentXVelocity, currentYVelocity, currentThetaVelocity, currentTime, timeDiff, pathPointsJSON);
@@ -120,6 +127,8 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     // create velocity vector and set desired theta change
     Vector velocityVector = new Vector(desiredVelocityArray[0], desiredVelocityArray[1]);
     desiredThetaChange = desiredVelocityArray[2];
+
+    System.out.println("@@@@@@@@@@@ " + Math.toDegrees(drive.getOdometryAngle()));
 
     // call autoDrive function to move the robot
     drive.autoDrive(velocityVector, desiredThetaChange);
@@ -141,7 +150,7 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    if(currentTime > pathPointsJSON.getJSONObject(pathPointsJSON.length()).getDouble("time")){
+    if(currentTime > pathPointsJSON.getJSONObject(pathPointsJSON.length() - 1).getDouble("time")){
       return true;
     }
     return false;

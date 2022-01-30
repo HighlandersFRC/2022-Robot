@@ -7,7 +7,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.Peripherals;
 
 public class IntakeDefault extends CommandBase {
   /** Creates a new intakeDefault. */
@@ -27,7 +26,7 @@ public class IntakeDefault extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-   // intake.setIntakeUp();
+    //intake.setIntakeUp();
     intake.setIntakePercent(0);
   }
 
