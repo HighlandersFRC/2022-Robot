@@ -7,8 +7,7 @@ package frc.robot.commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
-import frc.robot.subsystems.Feeder;
-import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.IntakeFeeder;
 import frc.robot.subsystems.LinearActuator;
 import frc.robot.subsystems.Shooter;
 
@@ -17,17 +16,17 @@ import frc.robot.subsystems.Shooter;
 // https://docs.wpilib.org/en/stable/docs/software/commandbased/convenience-features.html
 public class FireBalls extends SequentialCommandGroup {
   /** Creates a new FireBalls. */
-  public FireBalls(Intake intake, Feeder feeder, Shooter shooter, LinearActuator linearActuator) {
+  public FireBalls(IntakeFeeder intakeFeeder, Shooter shooter, LinearActuator linearActuator) {
     // Add your commands in the addCommands() call, e.g.
     // addCommands(new FooCommand(), new BarCommand());
-    addRequirements(intake, feeder, shooter, linearActuator);
+    addRequirements(intakeFeeder, shooter, linearActuator);
     addCommands(
       new ParallelCommandGroup(
           new SpinShooter(shooter, 0.5),
           new SetHoodPosition(linearActuator, 0.95)
       ),
       new WaitCommand(1),
-      new EjectBalls(feeder, 0.7)
+      new EjectBalls(intakeFeeder, 0.7)
     );
   }
 }

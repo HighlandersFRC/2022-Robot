@@ -5,15 +5,15 @@
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.IntakeFeeder;
 
 public class IntakeUp extends CommandBase {
-  private static Intake intake;  
+  private static IntakeFeeder intakeFeeder;  
 
-  public IntakeUp(Intake intake) {
+  public IntakeUp(IntakeFeeder intakeFeeder) {
     // Use addRequirements() here to declare subsystem dependencies.
-    this.intake = intake;
-    addRequirements(this.intake);
+    this.intakeFeeder = intakeFeeder;
+    addRequirements(this.intakeFeeder);
   }
 
   // Called when the command is initially scheduled.
@@ -24,7 +24,7 @@ public class IntakeUp extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    intake.setIntakeUp();
+    intakeFeeder.setIntakeUp();
     // intake.setIntakePercent(-0.4);
   }
 

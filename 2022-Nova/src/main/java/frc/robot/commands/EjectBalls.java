@@ -5,18 +5,18 @@
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.robot.subsystems.Feeder;
+import frc.robot.subsystems.IntakeFeeder;
 
 public class EjectBalls extends CommandBase {
   /** Creates a new EjectBalls. */
 
-  private Feeder feeder;
+  private IntakeFeeder intakeFeeder;
   private double feederPercent;
 
-  public EjectBalls(Feeder feeder, double percent) {
-    this.feeder = feeder;
+  public EjectBalls(IntakeFeeder intakeFeeder, double percent) {
+    this.intakeFeeder = intakeFeeder;
     this.feederPercent = percent;
-    addRequirements(feeder);
+    addRequirements(intakeFeeder);
     // Use addRequirements() here to declare subsystem dependencies.
   }
 
@@ -27,14 +27,16 @@ public class EjectBalls extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    feeder.setUpperFalcon(feederPercent);
-    feeder.setLowerFalcon(feederPercent);
-    feeder.setBeltFalcon(feederPercent);
+    intakeFeeder.setUpperFalcon(feederPercent);
+    intakeFeeder.setLowerFalcon(feederPercent);
+    intakeFeeder.setBeltFalcon(feederPercent);
   }
 
   // Called once the command ends or is interrupted.
   @Override
-  public void end(boolean interrupted) {}
+  public void end(boolean interrupted) {
+    intakeFeeder.setBallCount(0);
+  }
 
   // Returns true when the command should end.
   @Override

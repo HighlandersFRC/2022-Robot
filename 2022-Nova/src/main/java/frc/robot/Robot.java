@@ -15,8 +15,7 @@ import frc.robot.commands.SetHoodPosition;
 import frc.robot.commands.SpinShooter;
 import frc.robot.commands.VisionAlignment;
 import frc.robot.subsystems.Drive;
-import frc.robot.subsystems.Feeder;
-import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.IntakeFeeder;
 import frc.robot.subsystems.LinearActuator;
 import frc.robot.subsystems.MqttPublish;
 import frc.robot.subsystems.MqttSubscribe;
@@ -53,11 +52,10 @@ public class Robot extends TimedRobot {
   private final Drive drive = new Drive(peripherals);
   private final Shooter shooter = new Shooter();
   private final LinearActuator linearActuator = new LinearActuator();
-  private final Feeder feeder = new Feeder();
 
   private final PneumaticsControl pneumatics = new PneumaticsControl();
   
-  private final Intake intake = new Intake(pneumatics);
+  private final IntakeFeeder intakeFeeder = new IntakeFeeder(pneumatics);
 
   private final String subCameraTopic = "/sensors/camera";
   private final String pubCameraTopic = "/robot/camera";
@@ -75,10 +73,9 @@ public class Robot extends TimedRobot {
     // System.out.println("###########");
     drive.init();
     peripherals.init();
-    intake.init();
+    intakeFeeder.init();
     shooter.init();
     linearActuator.init();
-    feeder.init();
 
     // publish.publish(pubCameraTopic);
     subscribe.subscribe(subCameraTopic);
@@ -101,6 +98,7 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance().run();
     // System.out.println(">>>>>>>>>>>>>>>>>>> " + drive.getOdometryAngle());
     // System.out.println(Math.toDegrees(peripherals.getNavxAngle()));
+    intakeFeeder.periodic();
     }
   
 
@@ -140,6 +138,7 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopInit() {
     startTime = Timer.getFPGATimestamp();
+    intakeFeeder.teleopInit();
     // try{
     //   f = new File("/home/lvuser/Navx/NavxValues" +  (int) startTime + ".csv");
     //   if(!f.exists()){
@@ -162,20 +161,20 @@ public class Robot extends TimedRobot {
     // OI.driverA.whenPressed(new DriveForward(drive, 2, true));
     // OI.driverB.whenPressed(new DriveForward(drive, 2, false));
 
-    OI.driverRT.whileHeld(new IntakeBalls(intake));
-    OI.driverLT.whileHeld(new EjectBalls(feeder, 0.4));
+    OI.driverRT.whileHeld(new IntakeBalls(intakeFeeder));
+    OI.driverLT.whileHeld(new EjectBalls(intakeFeeder, 0.4));
     // OI.driverB.whileHeld(new IntakeUp(intake));
 
     OI.driverA.whileHeld(new SetHoodPosition(linearActuator, 0.2));
     OI.driverB.whileHeld(new SetHoodPosition(linearActuator, 0.4));
     OI.driverY.whileHeld(new SetHoodPosition(linearActuator, 0.95));
 
-    OI.driverX.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator));
+    OI.driverX.whenPressed(new FireBalls(intakeFeeder, shooter, linearActuator));
 
     // OI.driverB.whileHeld(new SpinShooter(shooter, 0.5));
 
     OI.driverX.whenReleased(new SetHoodPosition(linearActuator, 0));
-    OI.driverX.whenReleased(new EjectBalls(feeder, 0));
+    OI.driverX.whenReleased(new EjectBalls(intakeFeeder, 0));
     OI.driverX.whenReleased(new SpinShooter(shooter, 0));
 
 
@@ -199,7 +198,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testInit() {
-    OI.driverRT.whileHeld(new IntakeBalls(intake));
+    OI.driverRT.whileHeld(new IntakeBalls(intakeFeeder));
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
   }
