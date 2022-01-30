@@ -52,8 +52,9 @@ public class SwerveModule extends SubsystemBase {
         angleMotor.selectProfileSlot(0, 0);
         angleMotor.config_kF(0, 0.0);
         angleMotor.config_kP(0, 0.5);
-        angleMotor.config_kI(0, 0);
-        angleMotor.config_kD(0, 0);
+        angleMotor.config_kI(0, 0.005);
+        angleMotor.config_kD(0, 5);
+        angleMotor.config_IntegralZone(0, 0.01);
 
         // sets drive motor to brake
         driveMotor.setNeutralMode(NeutralMode.Brake);
@@ -149,9 +150,9 @@ public class SwerveModule extends SubsystemBase {
         driveMotor.setSelectedSensorPosition(0);
         driveMotor.setInverted(true);;
 
-        driveMotor.config_kP(0, 0.0849998);
-        driveMotor.config_kI(0, 0.0008997917);
-        driveMotor.config_kD(0, 0.899999857);
+        driveMotor.config_kP(0, 0.16);
+        driveMotor.config_kI(0, 0);
+        driveMotor.config_kD(0, 0);
     }
 
     // returns angle motor position in ticks
@@ -203,7 +204,7 @@ public class SwerveModule extends SubsystemBase {
         else {
             // finds the target angle based on controller XY and then factors in navx offset
             double targetAngle = Math.atan2(speedVector.getJ(), speedVector.getI());
-            targetAngle = targetAngle + degreesToRadians(navxOffset);
+            targetAngle = targetAngle - (navxOffset);
 
             // converts target angle from (r, theta) to <x, y>
             double hypotenuse = Math.sqrt(Math.pow(speedVector.getI(), 2) + Math.pow(speedVector.getJ(), 2));

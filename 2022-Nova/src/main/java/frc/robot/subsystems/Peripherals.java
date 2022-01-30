@@ -42,6 +42,10 @@ public class Peripherals extends SubsystemBase {
     return navx.currentAngle();
 }
 
+  public double getRawNavxAngle() {
+    return navx.getRawAngle();
+  }
+
   public void zeroNavx() {
     navx.softResetAngle();
 }

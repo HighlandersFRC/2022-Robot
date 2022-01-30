@@ -99,7 +99,7 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     // get odometry positions
     currentX = drive.getOdometryX();
     currentY = drive.getOdometryY();
-    currentTheta = drive.getPeripheralsAngle();
+    currentTheta = drive.getOdometryAngle();
 
     currentTime = Timer.getFPGATimestamp() - initTime;
     timeDiff = currentTime - previousTime;
@@ -121,8 +121,10 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
 
     // System.out.println("Time: " + currentTime + " Angle: " + Math.toDegrees(currentTheta) + " OdometryX: " + currentX + " PredictedX: " + estimatedX + " OdometryY: " + currentY + " PredictedY: " + estimatedY);
 
+    // System.out.println("Time: " + currentTime + " " + drive.getDriveOdometry());
+
     // call ConstantAccelerationInterpolation function
-    desiredVelocityArray = drive.constantAccelerationInterpolation(averagedX, averagedY, averagedTheta, currentXVelocity, currentYVelocity, currentThetaVelocity, currentTime, timeDiff, pathPointsJSON);
+    desiredVelocityArray = drive.constantAccelerationInterpolation(averagedX, averagedY, currentTheta, currentXVelocity, currentYVelocity, currentThetaVelocity, currentTime, timeDiff, pathPointsJSON);
     
     // create velocity vector and set desired theta change
     Vector velocityVector = new Vector(desiredVelocityArray[0], desiredVelocityArray[1]);
@@ -141,11 +143,14 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     previousEstimateX = estimatedX;
     previousEstimateY = estimatedY;
     previousEstimateTheta = estimatedTheta;
+
+    // System.out.println("ODOMETRY ANGLE: " + currentTheta + " THETA CHANGE" + desiredThetaChange);
   }
 
   // Called once the command ends or is interrupted.
   @Override
-  public void end(boolean interrupted) {}
+  public void end(boolean interrupted) {
+  }
 
   // Returns true when the command should end.
   @Override

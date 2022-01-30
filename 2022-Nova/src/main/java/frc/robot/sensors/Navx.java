@@ -26,10 +26,14 @@ public class Navx {
   }
 
   public double currentAngle() {
-      System.out.println("CHANGED OG ANGLE: " + Math.toDegrees(originalAngle));
+    //   System.out.println("CHANGED OG ANGLE: " + Math.toDegrees(originalAngle));
     //   System.out.println("NAVX: " + Math.toDegrees(imu.getAngle() - originalAngle));
-        System.out.println("NAVX NO OFFSET: " + Math.toDegrees(imu.getAngle()));
-      return imu.getAngle() - originalAngle;
+        // System.out.println("NAVX NO OFFSET: " + Math.toDegrees(imu.getAngle()));
+      return -(imu.getAngle() - originalAngle);
+  }
+
+  public double getRawAngle() {
+      return -(imu.getAngle());
   }
 
   public double currentPitch() {
@@ -83,7 +87,7 @@ public class Navx {
 
   public void setNavxAngle(double angle) {
       System.out.println("ORIGINAL ANGLE: " + originalAngle);
-      originalAngle = originalAngle - angle;
+      originalAngle = originalAngle + angle;
   }
 
 //   public void setNavxAngle(double angle) {

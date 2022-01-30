@@ -14,6 +14,7 @@ import frc.robot.commands.IntakeUp;
 import frc.robot.commands.SetHoodPosition;
 import frc.robot.commands.SpinShooter;
 import frc.robot.commands.VisionAlignment;
+import frc.robot.commands.autos.ThreeBallAuto;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Intake;
@@ -65,6 +66,8 @@ public class Robot extends TimedRobot {
   private MqttPublish publish = new MqttPublish();
   private MqttSubscribe subscribe = new MqttSubscribe();
 
+  private ThreeBallAuto threeBallAuto = new ThreeBallAuto(drive, intake);
+
 
   /**
    * This function is run when the robot is first started up and should be used
@@ -85,7 +88,7 @@ public class Robot extends TimedRobot {
     m_robotContainer = new RobotContainer();
 
     try {
-      pathingFile = new File("/home/lvuser/deploy/RotateTest.json");
+      pathingFile = new File("/home/lvuser/deploy/3BallAuto.json");
       FileReader scanner = new FileReader(pathingFile);
       pathJSON = new JSONArray(new JSONTokener(scanner));
     }
@@ -100,7 +103,7 @@ public class Robot extends TimedRobot {
     // System.out.println("^^^^^^^^^^^^^^^^^^^ " + drive.getOdometryAngle());
     CommandScheduler.getInstance().run();
     // System.out.println(">>>>>>>>>>>>>>>>>>> " + drive.getOdometryAngle());
-    // System.out.println(Math.toDegrees(peripherals.getNavxAngle()));
+    // System.out.println((peripherals.getRawNavxAngle()));
     }
   
 
@@ -129,8 +132,9 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     drive.autoInit(pathJSON);
     // peripherals.init();
-    testPath = new ContinuousAccelerationInterpolation(drive, pathJSON);
-    testPath.schedule();
+    // testPath = new ContinuousAccelerationInterpolation(drive, pathJSON);
+    // testPath.schedule();
+    threeBallAuto.schedule();
   }
 
   /** This function is called periodically during autonomous. */

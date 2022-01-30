@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import java.nio.file.Path;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.sensors.CANCoder;
@@ -126,9 +128,11 @@ public class Drive extends SubsystemBase {
     }
 
     public void autoInit(JSONArray pathPoints) {
-        peripherals.setNavxAngle(pathPoints.getJSONObject(0).getDouble("angle"));
-        System.out.println("|||||| Angle Set to: " + Math.toDegrees(peripherals.getNavxAngle()));
-        m_odometry.resetPosition(new Pose2d(new Translation2d(pathPoints.getJSONObject(0).getDouble("x"), pathPoints.getJSONObject(0).getDouble("y")),  new Rotation2d(peripherals.getNavxAngle())), new Rotation2d(peripherals.getNavxAngle()));
+        double firstPointAngle = pathPoints.getJSONObject(0).getDouble("angle");
+        peripherals.setNavxAngle(Math.toDegrees(firstPointAngle));
+        // double navxAngleRadians  = Math.toRadians(peripherals.getNavxAngle());
+        System.out.println("|||||| Angle Set to: " + (peripherals.getNavxAngle()));
+        m_odometry.resetPosition(new Pose2d(new Translation2d(pathPoints.getJSONObject(0).getDouble("x"), pathPoints.getJSONObject(0).getDouble("y")),  new Rotation2d(firstPointAngle)), new Rotation2d(firstPointAngle));
     }
 
     public double getOdometryX() {
@@ -151,6 +155,30 @@ public class Drive extends SubsystemBase {
         m_pose = m_odometry.update(new Rotation2d(Math.toRadians(-navxOffset)), leftFront.getState(Math.toRadians(-navxOffset)), rightFront.getState(Math.toRadians(-navxOffset)), leftBack.getState(Math.toRadians(-navxOffset)), rightBack.getState(Math.toRadians(-navxOffset)));
     }
 
+    public Pose2d getDriveOdometry() {
+        return m_pose;
+    }
+
+    public double getShortestAngle(double point1Angle, double point2Angle) {
+        double op1 = 0;
+        double op2 = 0;
+        if(point1Angle >= point2Angle) {
+            op2 = ((Math.PI * 2) - (point1Angle - point2Angle));
+            op1 = (point1Angle - point2Angle);
+        }
+        else {
+            op1 = ((Math.PI * 2) - (point2Angle - point1Angle));
+            op2 = (point2Angle - point1Angle);
+        }
+
+        if(op1 <= op2) {
+            return -op1;
+        }
+        else {
+            return op2;
+        }
+    }
+
     // method to actually run swerve code
     public void teleopDrive() {
         double turnLimit = 1;
@@ -169,7 +197,7 @@ public class Drive extends SubsystemBase {
         }
 
         double turn = -OI.getDriverRightX() * (Constants.TOP_SPEED)/(Constants.ROBOT_RADIUS);
-        double navxOffset = peripherals.getNavxAngle();
+        double navxOffset = Math.toRadians(peripherals.getNavxAngle());
         double xPower = getAdjustedX(originalX, originalY);
         double yPower = getAdjustedY(originalX, originalY);
 
@@ -179,7 +207,7 @@ public class Drive extends SubsystemBase {
         Vector controllerVector = new Vector(xSpeed, ySpeed);
 
         System.out.println("NAVX: " + peripherals.getNavxAngle());
-        m_pose = m_odometry.update(new Rotation2d(Math.toRadians(-navxOffset)), leftFront.getState(Math.toRadians(-navxOffset)), rightFront.getState(Math.toRadians(-navxOffset)), leftBack.getState(Math.toRadians(-navxOffset)), rightBack.getState(Math.toRadians(-navxOffset)));
+        m_pose = m_odometry.update(new Rotation2d((navxOffset)), leftFront.getState((navxOffset)), rightFront.getState((navxOffset)), leftBack.getState((navxOffset)), rightBack.getState((navxOffset)));
 
         leftFront.velocityDrive(controllerVector, turn, navxOffset);
         rightFront.velocityDrive(controllerVector, turn, navxOffset);
@@ -195,19 +223,19 @@ public class Drive extends SubsystemBase {
 
         rightFront.postDriveMotorTics();
 
-        System.out.println(m_odometry.getPoseMeters());
+        // System.out.println(m_odometry.getPoseMeters());
         // System.out.println("Rate: " + peripherals.getNavxRate());
     }
 
     public void autoDrive(Vector velocityVector, double turnRadiansPerSec) {
-        double navxOffset = (peripherals.getNavxAngle());
+        double navxOffset = Math.toRadians(peripherals.getNavxAngle());
         // System.out.println("OFFSET IN AUTODRIVE: " + Math.toDegrees(navxOffset));
-        System.out.println("NAVX ANGLE: " + Math.toDegrees(peripherals.getNavxAngle()));
+        // System.out.println("NAVX ANGLE: " + (peripherals.getNavxAngle()));
 
         // m_pose = m_odometry.update(new Rotation2d(Math.toRadians(-navxOffset)), leftFront.getState(Math.toRadians(-navxOffset)), rightFront.getState(Math.toRadians(-navxOffset)), leftBack.getState(Math.toRadians(-navxOffset)), rightBack.getState(Math.toRadians(-navxOffset)));
-        m_pose = m_odometry.update(new Rotation2d(-navxOffset), leftFront.getState(-navxOffset), rightFront.getState(-navxOffset), leftBack.getState(-navxOffset), rightBack.getState(-navxOffset));
+        m_pose = m_odometry.update(new Rotation2d(navxOffset), leftFront.getState(navxOffset), rightFront.getState(navxOffset), leftBack.getState(navxOffset), rightBack.getState(navxOffset));
 
-        System.out.println(m_odometry.getPoseMeters());
+        // System.out.println(m_odometry.getPoseMeters());
 
         leftFront.velocityDrive(velocityVector, turnRadiansPerSec, navxOffset);
         rightFront.velocityDrive(velocityVector, turnRadiansPerSec, navxOffset);
@@ -269,6 +297,20 @@ public class Drive extends SubsystemBase {
 
         currentPoint = pathPointsJSON.getJSONObject(currentPointIndex);
 
+        double sign = 1;
+        double angleDifference = 0;
+
+        for(int i = 0; i < pathPointsJSON.length() - 1; i++) {
+            if((pathPointsJSON.getJSONObject(i).getDouble("time") <= time) && (pathPointsJSON.getJSONObject(i + 1).getDouble("time") > time)) {
+                double point1Angle = pathPointsJSON.getJSONObject(i).getDouble("angle");
+                double point2Angle = pathPointsJSON.getJSONObject(i + 1).getDouble("angle");
+
+                angleDifference = getShortestAngle(currentTheta, point2Angle);
+            }
+        }
+
+        // System.out.println("DIFFERENCE: " + angleDifference);
+
         double currentPointTime = currentPoint.getDouble("time");
 
         double velocityX = 0;
@@ -285,12 +327,14 @@ public class Drive extends SubsystemBase {
                 velocityX = currentXVelocity;
                 velocityY = currentYVelocity;
                 thetaChange = currentThetaVelocity;
+                // System.out.println("INSIDE CYCLE PERIOD BLOCK")
             }
             // otherwise set velocity by checking difference between wanted position and current position divided by time
             else {
                 velocityX = (currentPoint.getDouble("x") - currentX)/(currentPointTime - time);
                 velocityY = (currentPoint.getDouble("y") - currentY)/(currentPointTime - time);
-                thetaChange = (currentPoint.getDouble("angle") - currentTheta)/(currentPointTime - time);
+                thetaChange = (angleDifference)/(currentPointTime - time);
+                // System.out.println("POINT THETA: " + currentPoint.getDouble("angle") + " ACTUAL ANGLE: " + currentTheta + " POINT TIME: " + currentPointTime + " TIME: " + time);
             }
             velocityArray[0] = velocityX;
             velocityArray[1] = velocityY;
@@ -314,7 +358,8 @@ public class Drive extends SubsystemBase {
             else {
                 velocityX = (nextPoint.getDouble("x") - currentX)/(nextPointTime - time);
                 velocityY = (nextPoint.getDouble("y") - currentY)/(nextPointTime - time);
-                thetaChange = (nextPoint.getDouble("angle") - currentTheta)/(nextPointTime - time);
+                thetaChange = (angleDifference)/(nextPointTime - time);
+                // System.out.println("FIRST P IN PATH" + " POINT THETA: " + currentPoint.getDouble("angle") + " ACTUAL ANGLE: " + currentTheta + " POINT TIME: " + currentPointTime + " TIME: " + time);
             }
             velocityArray[0] = velocityX;
             velocityArray[1] = velocityY;
@@ -365,7 +410,7 @@ public class Drive extends SubsystemBase {
                 // System.out.println("NOT WITHIN CYCLE PERIOD");
                 velocityX = (currentPoint.getDouble("x") - currentX)/(currentPointTime - time);
                 velocityY = (currentPoint.getDouble("y") - currentY)/(currentPointTime - time);
-                thetaChange = (currentPoint.getDouble("angle") - currentTheta)/(currentPointTime - time);
+                thetaChange = (angleDifference)/(currentPointTime - time);
             }
         }
         // if in the interpolation range and curving towards next line segment between current point and next point
@@ -382,10 +427,12 @@ public class Drive extends SubsystemBase {
             double t2Y = (nextPoint.getDouble("y") - currentPoint.getDouble("y"))/timeDiffT2;
             double t2Theta = (nextPoint.getDouble("angle") - currentPoint.getDouble("angle"))/timeDiffT2;
 
+            angleDifference = getShortestAngle(t1Theta, t2Theta);
+
             // determine the ideal accelerations on interpolation curve
             double idealAccelX = (t2X - t1X)/(t2 - t1);
             double idealAccelY = (t2Y - t1Y)/(t2- t1);
-            double idealAccelTheta = (t2Theta - t1Theta)/(t2 - t1);
+            double idealAccelTheta = (angleDifference)/(t2 - t1);
 
             // determine (x,y,theta) position at t1
             double t1XPosition = (t1X * t1) + previousPoint.getDouble("x");
@@ -403,6 +450,7 @@ public class Drive extends SubsystemBase {
             // determine the ideal velocity at a given time in the interpolation range based on the ideal acceleration at the time
             double idealVelocityX = t1X + (idealAccelX * interpTime);
             double idealVelocityY = t1Y + (idealAccelY * interpTime);
+
             double idealVelocityTheta = t1Theta + (idealAccelTheta * interpTime);
 
             // determine the desired velocity of the robot based on difference between our ideal position and current position time a correction coefficient + the ideal velocity
@@ -423,7 +471,7 @@ public class Drive extends SubsystemBase {
             else {
                 velocityX = (nextPoint.getDouble("x") - currentX)/(nextPointTime - time);
                 velocityY = (nextPoint.getDouble("y") - currentY)/(nextPointTime - time);
-                thetaChange = (nextPoint.getDouble("angle") - currentTheta)/(nextPointTime - time);
+                thetaChange = (angleDifference)/(nextPointTime - time);
             }
         }
         velocityArray[0] = velocityX;
