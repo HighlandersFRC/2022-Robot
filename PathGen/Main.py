@@ -14,6 +14,7 @@ screenWidth = 1600
 screenHeight = 500
 
 selectedValue = 0
+prevSelectedValue = 0
 selectedPoint = None
 editorString = ''
 editorString2 = ''
@@ -108,6 +109,11 @@ while running:
     draw.drawMouseCoords(fileName)
     if selectedPoint != None:
         selectedValue = draw.drawPointInfo(selectedPoint, fileName, saveName)
+        if selectedValue != prevSelectedValue:
+            editorString = ''
+            editorString2 = ''
+        print(selectedValue)
+        prevSelectedValue = selectedValue
 
     ############
     pygame.display.flip()
