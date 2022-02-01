@@ -112,7 +112,7 @@ while running:
         if selectedValue != prevSelectedValue:
             editorString = ''
             editorString2 = ''
-        print(selectedValue)
+        #print(selectedValue)
         prevSelectedValue = selectedValue
 
     ############

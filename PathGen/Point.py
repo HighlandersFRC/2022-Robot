@@ -18,6 +18,7 @@ class Point:
         self.interpolationRange = interpolationRange
         self.color = color
         self.index = len(points)
+        self.timeStamp = ''
 
     def updatePixelPos(self):
         self.pixelX = Convert.getPixelPos((self.x, self.y))[0]
@@ -65,11 +66,14 @@ def deletePoint(index):
     updatePointTimes()
 
 def savePath(fileName):
+    timeStamp = {'timeStamp': str(datetime.now().timestamp())}
     if len(points) > 0:
         jsonPoints = []
         for point in points:
             point.color = (255, 0, 0)
+            point.timeStamp = timeStamp
             jsonPoints.append(point.toJSON())
+        
         try:
             outfile = open(f"json-paths/{fileName}.json", "w")
             # with open(f"json-paths/{fileName}.json", "w") as outfile:
