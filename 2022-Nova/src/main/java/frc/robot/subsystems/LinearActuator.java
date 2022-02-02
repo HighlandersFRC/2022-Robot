@@ -14,16 +14,18 @@ public class LinearActuator extends SubsystemBase {
   private Servo leftLinearActuator = new Servo(0);
   /** Creates a new LinearActuator. */
   public LinearActuator() {
-    rightLinearActuator.setBounds(2, 1.5, 1.5, 1.5, 1);
+    // rightLinearActuator.setBounds(2, 1.5, 1.5, 1.5, 1);
+    rightLinearActuator.setBounds(2.0, 1.8, 1.5, 1.2, 1.0);
+    leftLinearActuator.setBounds(2.0, 1.8, 1.5, 1.2, 1.0);
   }
 
   public void init(){
     setDefaultCommand(new LinearActuatorDefault(this));
   }
 
-  public double getActuatorPosition() {
-    return rightLinearActuator.getPosition();
-  }
+  // public double getActuatorPosition() {
+  //   return rightLinearActuator.getPosition();
+  // }
 
   public void setActuator(double target){
     rightLinearActuator.setPosition(target);

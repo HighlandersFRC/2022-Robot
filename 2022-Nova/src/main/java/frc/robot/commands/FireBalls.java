@@ -17,17 +17,18 @@ import frc.robot.subsystems.Shooter;
 // https://docs.wpilib.org/en/stable/docs/software/commandbased/convenience-features.html
 public class FireBalls extends SequentialCommandGroup {
   /** Creates a new FireBalls. */
-  public FireBalls(Intake intake, Feeder feeder, Shooter shooter, LinearActuator linearActuator) {
+  public FireBalls(Intake intake, Feeder feeder, Shooter shooter, LinearActuator linearActuator, double hoodPosition, double shooterRPM) {
     // Add your commands in the addCommands() call, e.g.
     // addCommands(new FooCommand(), new BarCommand());
     addRequirements(intake, feeder, shooter, linearActuator);
     addCommands(
       new ParallelCommandGroup(
-          new SpinShooter(shooter, 0.5),
-          new SetHoodPosition(linearActuator, 0.95)
+          new SpinShooter(shooter, shooterRPM),
+          new SetHoodPosition(linearActuator, hoodPosition)
       ),
-      new WaitCommand(1),
-      new EjectBalls(feeder, 0.7)
+      new WaitCommand(2),
+      new EjectBalls(feeder, 0.7, 2),
+      new EjectBalls(feeder, 0.0, 0.1)
     );
   }
 }

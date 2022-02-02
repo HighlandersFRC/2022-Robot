@@ -4,38 +4,32 @@
 
 package frc.robot.commands;
 
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.robot.subsystems.Feeder;
+import frc.robot.subsystems.Climber;
+import edu.wpi.first.wpilibj.Timer;
 
-public class EjectBalls extends CommandBase {
-  /** Creates a new EjectBalls. */
+public class RaiseClimber extends CommandBase {
+  /** Creates a new RaiseClimber. */
+  private Climber climber;
 
-  private Feeder feeder;
-  private double feederPercent;
-  private double time = 0;
-  private double initTime;
-
-  public EjectBalls(Feeder feeder, double percent, double time) {
-    this.feeder = feeder;
-    this.feederPercent = percent;
-    this.time = time;
-    addRequirements(feeder);
+  private double initTime = 0;
+  public RaiseClimber(Climber climber) {
+    this.climber = climber;
+    addRequirements(climber);
     // Use addRequirements() here to declare subsystem dependencies.
   }
 
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    initTime = Timer.getFPGATimestamp();
+    climber.releaseClimberBrake();
+    // initTime = Timer.getFPGATimestamp();
   }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    feeder.setUpperFalcon(feederPercent);
-    feeder.setLowerFalcon(feederPercent);
-    feeder.setBeltFalcon(feederPercent);
+    climber.setClimberPercents(0.25);
   }
 
   // Called once the command ends or is interrupted.
@@ -45,11 +39,6 @@ public class EjectBalls extends CommandBase {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    if(time != -1) {
-      if(Timer.getFPGATimestamp() - initTime > time) {
-        return true;
-      }
-    }
     return false;
   }
 }

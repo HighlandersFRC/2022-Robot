@@ -25,7 +25,7 @@ public class IntakeBalls extends CommandBase {
   @Override
   public void execute() {
     intake.setIntakeDown();
-    intake.setIntakePercent(-0.4);
+    intake.setIntakePercent(-0.6);
   }
 
   // Called once the command ends or is interrupted.

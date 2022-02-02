@@ -45,4 +45,14 @@ public final class Constants {
         return inchesToMeters(inches);
     }
 
+    public static int shooterRPMToUnitsPer100MS(double rpm) {
+        return (int) (Math.round((rpm / 600.0) * FALCON_TICS_PER_ROTATION));
+    }
+
+    public static double unitsPer100MsToRPM(double units) {
+        return (units * 600) / (Constants.FALCON_TICS_PER_ROTATION);
+
+
+    }
+
 }
