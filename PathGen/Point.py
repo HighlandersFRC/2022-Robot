@@ -66,7 +66,7 @@ def deletePoint(index):
     updatePointTimes()
 
 def savePath(fileName):
-    timeStamp = {'timeStamp': str(datetime.now().timestamp())}
+    timeStamp = str(datetime.now().timestamp())
     if len(points) > 0:
         jsonPoints = []
         for point in points:
