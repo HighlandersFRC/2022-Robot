@@ -42,6 +42,7 @@ public class ThreeBallAuto extends SequentialCommandGroup {
     // Add your commands in the addCommands() call, e.g.
     // addCommands(new FooCommand(), new BarCommand());
     addRequirements(drive, intake);
-    addCommands(new FireBalls(intake, feeder, shooter, linearActuator, 0.3, 1500), new ParallelRaceGroup(new ContinuousAccelerationInterpolation(drive, pathJSON), new IntakeBalls(intake)), new FireBalls(intake, feeder, shooter, linearActuator, 0, 1500));
+    addCommands(new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2300), new ParallelRaceGroup(new ContinuousAccelerationInterpolation(drive, pathJSON), new IntakeBalls(intake)), new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2600));
   }
 }
+

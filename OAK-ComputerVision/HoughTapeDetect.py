@@ -879,6 +879,7 @@ while True:
             # print("CenterX: " + str(targetCenterX) + "CenterY: " + str(targetCenterY))
 
         # print(xList)
+        publish(client, str(targetCenterX))
 
         cv2.imshow("depth", depthFrameColor)
         cv2.imshow("frame", frame)

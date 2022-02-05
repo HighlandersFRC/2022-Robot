@@ -421,13 +421,20 @@ public class Drive extends SubsystemBase {
             double t1Y = (currentPoint.getDouble("y") - previousPoint.getDouble("y"))/timeDiffT1;
             double t1Theta = (currentPoint.getDouble("angle") - previousPoint.getDouble("angle"))/timeDiffT1;
 
+            // double t1Angle = previousPoint.getDouble("angle") + ((currentPoint.getDouble("angle") - previousPoint.getDouble("angle")) * turnTimePercent);
+            double t1Angle = (getShortestAngle(previousPoint.getDouble("angle"), currentPoint.getDouble("angle")) * turnTimePercent) + previousPoint.getDouble("angle");
+            // double t2Angle = currentPoint.getDouble("angle") + ((nextPoint.getDouble("angle") - currentPoint.getDouble("angle")) * (1 - turnTimePercent));
+            double t2Angle = (getShortestAngle(currentPoint.getDouble("angle"), nextPoint.getDouble("angle")) * turnTimePercent) + currentPoint.getDouble("angle");
+
+            System.out.println("T1: " + t1Angle + " T2: " + t2Angle);
+
             // VELOCITIES
             // determine velocities when on line segment after t2 and heading towards next point
             double t2X = (nextPoint.getDouble("x") - currentPoint.getDouble("x"))/timeDiffT2;
             double t2Y = (nextPoint.getDouble("y") - currentPoint.getDouble("y"))/timeDiffT2;
             double t2Theta = (nextPoint.getDouble("angle") - currentPoint.getDouble("angle"))/timeDiffT2;
 
-            angleDifference = getShortestAngle(t1Theta, t2Theta);
+            angleDifference = getShortestAngle(t1Angle, t2Angle);
 
             // determine the ideal accelerations on interpolation curve
             double idealAccelX = (t2X - t1X)/(t2 - t1);
