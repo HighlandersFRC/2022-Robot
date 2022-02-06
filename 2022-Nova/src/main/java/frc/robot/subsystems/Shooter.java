@@ -14,7 +14,6 @@ import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.commands.defaults.IntakeDefault;
 import frc.robot.commands.defaults.ShooterDefault;
 import frc.robot.tools.PneumaticsControl;
 

@@ -1,7 +1,13 @@
 package frc.robot;
 
+import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.cscore.CvSink;
+import edu.wpi.first.cscore.CvSource;
+import edu.wpi.first.cscore.UsbCamera;
+import edu.wpi.first.cscore.VideoSink;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -16,9 +22,8 @@ import frc.robot.commands.SpinShooter;
 import frc.robot.commands.autos.ThreeBallAuto;
 import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Drive;
-import frc.robot.subsystems.Feeder;
-import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.LinearActuator;
+import frc.robot.subsystems.MagIntake;
 import frc.robot.subsystems.MqttPublish;
 import frc.robot.subsystems.MqttSubscribe;
 import frc.robot.subsystems.Peripherals;
@@ -50,14 +55,16 @@ public class Robot extends TimedRobot {
 
   ContinuousAccelerationInterpolation testPath;
 
+  private UsbCamera camera;
+  private VideoSink server;
+
   private final Peripherals peripherals = new Peripherals();
   private final Drive drive = new Drive(peripherals);
   private final Shooter shooter = new Shooter();
   private final LinearActuator linearActuator = new LinearActuator();
-  private final Feeder feeder = new Feeder();
   private final PneumaticsControl pneumatics = new PneumaticsControl();
-  private final Intake intake = new Intake(pneumatics);
   private final Climber climber = new Climber(pneumatics);
+  private final MagIntake magIntake = new MagIntake(pneumatics);
 
   private final String subCameraTopic = "/sensors/camera";
   private final String pubCameraTopic = "/robot/camera";
@@ -65,7 +72,7 @@ public class Robot extends TimedRobot {
   private MqttPublish publish = new MqttPublish();
   private MqttSubscribe subscribe = new MqttSubscribe();
 
-  private ThreeBallAuto threeBallAuto = new ThreeBallAuto(drive, intake, feeder, shooter, linearActuator);
+  private ThreeBallAuto threeBallAuto = new ThreeBallAuto(drive, magIntake, shooter, linearActuator);
 
 
   /**
@@ -77,10 +84,9 @@ public class Robot extends TimedRobot {
     // System.out.println("###########");
     drive.init();
     peripherals.init();
-    intake.init();
+    magIntake.init();
     shooter.init();
     linearActuator.init();
-    feeder.init();
     climber.init();
 
     // publish.publish(pubCameraTopic);
@@ -88,7 +94,7 @@ public class Robot extends TimedRobot {
     m_robotContainer = new RobotContainer();
 
     try {
-      pathingFile = new File("/home/lvuser/deploy/ThreeBallAutonomous.json");
+      pathingFile = new File("/home/lvuser/deploy/Adj3Ball.json");
       FileReader scanner = new FileReader(pathingFile);
       pathJSON = new JSONArray(new JSONTokener(scanner));
       System.out.println(pathJSON);
@@ -96,6 +102,15 @@ public class Robot extends TimedRobot {
     catch(Exception e) {
       System.out.println("ERROR WITH PATH FILE " + e);
     }
+
+    camera = CameraServer.startAutomaticCapture("Vision Stream", "/dev/video0");
+    camera.setResolution(320, 240);
+    camera.setFPS(15);
+
+    server.setSource(camera);
+    Shuffleboard.update();
+    SmartDashboard.updateValues();
+
   }
 
   @Override
@@ -168,24 +183,24 @@ public class Robot extends TimedRobot {
     // OI.driverA.whenPressed(new DriveForward(drive, 2, true));
     // OI.driverB.whenPressed(new DriveForward(drive, 2, false));
 
-    OI.driverRT.whileHeld(new IntakeBalls(intake));
-    OI.driverLT.whileHeld(new EjectBalls(feeder, 0.4, -1));
+    OI.driverRT.whileHeld(new IntakeBalls(magIntake));
+    OI.driverLT.whileHeld(new EjectBalls(magIntake, 0.7, 0.3, 0.3, -1));
     // OI.driverB.whileHeld(new IntakeUp(intake));
 
     // OI.driverA.whileHeld(new SetHoodPosition(linearActuator, 0.2));
     // OI.driverB.whileHeld(new SetHoodPosition(linearActuator, 0.4));
     // OI.driverY.whileHeld(new SetHoodPosition(linearActuator, 0.6));
 
-    OI.driverA.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator, 0, 1500));
-    OI.driverB.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator, 0.3, 2000));
-    OI.driverY.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2500));
-    OI.driverX.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator, 0.7, 3000));
+    OI.driverA.whenPressed(new FireBalls(magIntake, shooter, linearActuator, 0, 1500));
+    OI.driverB.whenPressed(new FireBalls(magIntake, shooter, linearActuator, 0.3, 2000));
+    OI.driverY.whenPressed(new FireBalls(magIntake, shooter, linearActuator, 0.5, 2500));
+    OI.driverX.whenPressed(new FireBalls(magIntake, shooter, linearActuator, 0.7, 3000));
   
 
     // OI.driverB.whileHeld(new SpinShooter(shooter, 0.5));
 
     OI.driverX.whenReleased(new SetHoodPosition(linearActuator, 0));
-    OI.driverX.whenReleased(new EjectBalls(feeder, 0, -1));
+    OI.driverX.whenReleased(new EjectBalls(magIntake, 0, 0, 0, -1));
     OI.driverX.whenReleased(new SpinShooter(shooter, 0));
 
     OI.operatorX.whileHeld(new RaiseClimber(climber));
@@ -210,7 +225,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testInit() {
-    OI.driverRT.whileHeld(new IntakeBalls(intake));
+    OI.driverRT.whileHeld(new IntakeBalls(magIntake));
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
   }

@@ -16,10 +16,10 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.commands.ContinuousAccelerationInterpolation;
 import frc.robot.commands.FireBalls;
 import frc.robot.commands.IntakeBalls;
+import frc.robot.commands.IntakeDown;
 import frc.robot.subsystems.Drive;
-import frc.robot.subsystems.Feeder;
-import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.LinearActuator;
+import frc.robot.subsystems.MagIntake;
 import frc.robot.subsystems.Shooter;
 
 // NOTE:  Consider using this command inline, rather than writing a subclass.  For more
@@ -30,9 +30,9 @@ public class ThreeBallAuto extends SequentialCommandGroup {
   private File pathingFile;
   private JSONArray pathJSON;
 
-  public ThreeBallAuto(Drive drive, Intake intake, Feeder feeder, Shooter shooter, LinearActuator linearActuator) {
+  public ThreeBallAuto(Drive drive, MagIntake magIntake, Shooter shooter, LinearActuator linearActuator) {
     try {
-      pathingFile = new File("/home/lvuser/deploy/ThreeBallAutonomous.json");
+      pathingFile = new File("/home/lvuser/deploy/Adj3Ball.json");
       FileReader scanner = new FileReader(pathingFile);
       pathJSON = new JSONArray(new JSONTokener(scanner));
     }
@@ -41,8 +41,8 @@ public class ThreeBallAuto extends SequentialCommandGroup {
     }
     // Add your commands in the addCommands() call, e.g.
     // addCommands(new FooCommand(), new BarCommand());
-    addRequirements(drive, intake);
-    addCommands(new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2300), new ParallelRaceGroup(new ContinuousAccelerationInterpolation(drive, pathJSON), new IntakeBalls(intake)), new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2600));
+    addRequirements(drive, magIntake);
+    addCommands(new IntakeDown(magIntake), new FireBalls(magIntake, shooter, linearActuator, 0.5, 2300), new ParallelRaceGroup(new ContinuousAccelerationInterpolation(drive, pathJSON), new IntakeBalls(magIntake)), new FireBalls(magIntake, shooter, linearActuator, 0.5, 2600));
   }
 }
 

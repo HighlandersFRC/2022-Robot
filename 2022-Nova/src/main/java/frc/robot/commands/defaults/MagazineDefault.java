@@ -5,14 +5,14 @@
 package frc.robot.commands.defaults;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.robot.subsystems.Feeder;
+import frc.robot.subsystems.MagIntake;
 
-public class FeederDefault extends CommandBase {
-  /** Creates a new FeederDefault. */
-  private Feeder feeder;
-  public FeederDefault(Feeder feeder) {
-    this.feeder = feeder;
-    addRequirements(feeder);
+public class MagazineDefault extends CommandBase {
+  /** Creates a new MagIntakeDefault. */
+  private MagIntake magIntake;
+  public MagazineDefault(MagIntake magIntake) {
+    this.magIntake = magIntake;
+    addRequirements(magIntake);
     // Use addRequirements() here to declare subsystem dependencies.
   }
 
@@ -23,9 +23,12 @@ public class FeederDefault extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    feeder.setUpperFalcon(0);
-    feeder.setLowerFalcon(0);
-    feeder.setBeltFalcon(0);
+    magIntake.setUpperFalcon(0);
+    magIntake.setLowerFalcon(0);
+    magIntake.setBeltFalcon(0);
+    magIntake.setIntakePercent(0);
+    // magIntake.moveMagazine();
+    magIntake.setIntakeUp();
   }
 
   // Called once the command ends or is interrupted.

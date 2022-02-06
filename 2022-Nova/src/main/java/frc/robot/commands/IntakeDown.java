@@ -7,14 +7,13 @@ package frc.robot.commands;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.MagIntake;
 
-public class IntakeBalls extends CommandBase {
- // private static Intake intake;  
-  private MagIntake magIntake;
+public class IntakeDown extends CommandBase {
+  private static MagIntake magIntake;  
 
-  public IntakeBalls(MagIntake magIntake) {
+  public IntakeDown(MagIntake magIntake) {
     // Use addRequirements() here to declare subsystem dependencies.
     this.magIntake = magIntake;
-    addRequirements(magIntake);
+    addRequirements(this.magIntake);
   }
 
   // Called when the command is initially scheduled.
@@ -26,9 +25,7 @@ public class IntakeBalls extends CommandBase {
   @Override
   public void execute() {
     magIntake.setIntakeDown();
-    magIntake.setIntakePercent(-0.6);
-    magIntake.moveMagazine();
-    magIntake.setBeltFalcon(0.5);
+    // intake.setIntakePercent(-0.4);
   }
 
   // Called once the command ends or is interrupted.
@@ -38,6 +35,6 @@ public class IntakeBalls extends CommandBase {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return false;
+    return true;
   }
 }

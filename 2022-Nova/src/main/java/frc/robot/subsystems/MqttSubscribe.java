@@ -2,6 +2,9 @@ package frc.robot.subsystems;
 
 import org.json.*;
 import org.json.JSONObject;
+
+import edu.wpi.first.wpilibj.Timer;
+
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -19,6 +22,11 @@ public class MqttSubscribe implements MqttCallback  {
 	private static final String clientId = "clientId12";
 
     private double lastMessageVal = 0;
+
+    private boolean connection = false;
+
+	private double crashTime;
+	private double startTime;
 
 	public void subscribe(String topic) {
         Runnable task = 
@@ -55,6 +63,10 @@ public class MqttSubscribe implements MqttCallback  {
 
 	 //Called when the client lost the connection to the broker
 	public void connectionLost(Throwable arg0) {
+        System.out.println("CONNECTION LOST");
+		connection = false;
+		crashTime = Timer.getFPGATimestamp();
+		System.out.println("Crash Time: "+ crashTime);
 		
 	}
 
