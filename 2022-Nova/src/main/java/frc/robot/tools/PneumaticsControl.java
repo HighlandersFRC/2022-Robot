@@ -14,11 +14,11 @@ public class PneumaticsControl {
     // private final DoubleSolenoid rightClimberBrake = new DoubleSolenoid(PneumaticsModuleType.REVPH, 10, 11);
 
     public void setIntakeUp() {
-        intakeSolenoid.set(Value.kReverse);
+        intakeSolenoid.set(Value.kForward);
     }
 
     public void setIntakeDown() {
-        intakeSolenoid.set(Value.kForward);
+        intakeSolenoid.set(Value.kReverse);
     }
 
     public void engageClimberBrake() {

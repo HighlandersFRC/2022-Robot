@@ -89,7 +89,7 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
       averagedTheta = (estimatedTheta + currentTheta)/2;
 
       initTime = Timer.getFPGATimestamp();
-      System.out.println("Time: " + currentTime + " Angle: " + drive.getOdometryAngle() + " OdometryX: " + currentX + " PredictedX: " + estimatedX + " OdometryY: " + currentY + " PredictedY: " + estimatedY);
+      // System.out.println("Time: " + currentTime + " Angle: " + drive.getOdometryAngle() + " OdometryX: " + currentX + " PredictedX: " + estimatedX + " OdometryY: " + currentY + " PredictedY: " + estimatedY);
 
     }
 
@@ -119,8 +119,8 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     averagedY = (estimatedY + currentY)/2;
     averagedTheta = (estimatedTheta + currentTheta)/2;
 
-    // System.out.println("Time: " + currentTime + " Angle: " + Math.toDegrees(currentTheta) + " OdometryX: " + currentX + " PredictedX: " + estimatedX + " OdometryY: " + currentY + " PredictedY: " + estimatedY);
-
+    // System.out.println("Time: " + currentTime + " Angle: " + Math.toDegrees(currentTheta) + " OdometryX: " + currentX + " OdometryY: " + currentY);
+    // System.out.println()
     // System.out.println("Time: " + currentTime + " " + drive.getDriveOdometry());
 
     // call ConstantAccelerationInterpolation function

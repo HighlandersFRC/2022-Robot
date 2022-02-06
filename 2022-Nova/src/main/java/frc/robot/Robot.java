@@ -88,7 +88,7 @@ public class Robot extends TimedRobot {
     m_robotContainer = new RobotContainer();
 
     try {
-      pathingFile = new File("/home/lvuser/deploy/ThreeBallAutonomous.json");
+      pathingFile = new File("/home/lvuser/deploy/Adj3Ball.json");
       FileReader scanner = new FileReader(pathingFile);
       pathJSON = new JSONArray(new JSONTokener(scanner));
       System.out.println(pathJSON);
@@ -195,6 +195,7 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
+    System.out.println(peripherals.getNavxAngle());
     // System.out.println(pathJSON.toString());
     //    try{
     //   bw.write(Timer.getFPGATimestamp() - startTime + ",");

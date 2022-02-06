@@ -373,7 +373,7 @@ public class Drive extends SubsystemBase {
             turnTimePercent = currentPoint.getDouble("interpolationRange");
         }
         catch(Exception e) {
-            turnTimePercent = 0.8;
+            turnTimePercent = 0;
         }
 
         // determine which points are the next point and previous point
@@ -391,10 +391,12 @@ public class Drive extends SubsystemBase {
         double minTimeDiff = Math.min(timeDiffT1, timeDiffT2);
 
         // t1 is the point at which the robot will start a curved trajectory towards the next line segment (based on interpolation range)
-        double t1 = (minTimeDiff * turnTimePercent) + previousPointTime;
+        double t1 = currentPointTime - (minTimeDiff * turnTimePercent);
+
+        // System.out.println("T1: " + )
 
         // t2 is the point at which the robot will end its curved trajectory towards the next line segment (based on interpolation range)
-        double t2 = (minTimeDiff * (1 - turnTimePercent)) + currentPointTime;
+        double t2 = currentPointTime + (minTimeDiff * (turnTimePercent));
 
         // if on a line segment between previous point and current point
         if(time < t1) {
@@ -415,6 +417,7 @@ public class Drive extends SubsystemBase {
         }
         // if in the interpolation range and curving towards next line segment between current point and next point
         else if(time >= t1 && time < t2) {
+            System.out.println("||||||||||||||||||||||||||");
             // VELOCITIES
             // determine velocities when on line segment going towards t1
             double t1X = (currentPoint.getDouble("x") - previousPoint.getDouble("x"))/timeDiffT1;

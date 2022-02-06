@@ -418,6 +418,7 @@ import depthai
 import numpy as np  # numpy - manipulate the packet data returned by depthai
 import math
 from math import cos, sin, tan, pi
+from paho.mqtt import client as mqtt_client
 
 broker = '10.44.99.11'
 port = 1883
@@ -428,6 +429,7 @@ client_id = "44H99"
 sub_client_id = "99H44"
 
 def connect_mqtt():
+    # client_id = "44H99"
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
             print("Connected to MQTT Broker!")
@@ -704,21 +706,24 @@ color = (255, 255, 255)
 q_rgb = device.getOutputQueue("rgb")
 frame = None
 
-cv2.namedWindow('HSV Tuner', cv2.WINDOW_AUTOSIZE)
+client = connect_mqtt()
 
-cv2.createTrackbar('Lower H', "HSV Tuner", 0, 255, on_change)
-cv2.createTrackbar('Higher H', "HSV Tuner", 0, 255, on_change)
-cv2.createTrackbar('Lower S', "HSV Tuner", 0, 255, on_change)
-cv2.createTrackbar('Higher S', "HSV Tuner", 0, 255, on_change)
-cv2.createTrackbar('Lower V', "HSV Tuner", 0, 255, on_change)
-cv2.createTrackbar('Higher V', "HSV Tuner", 0, 255, on_change)
 
-cv2.setTrackbarPos('Lower H', "HSV Tuner", lowerH)
-cv2.setTrackbarPos('Higher H', "HSV Tuner", upperH)
-cv2.setTrackbarPos('Lower S', "HSV Tuner", lowerS)
-cv2.setTrackbarPos('Higher S', "HSV Tuner", upperS)
-cv2.setTrackbarPos('Lower V', "HSV Tuner", lowerV)
-cv2.setTrackbarPos('Higher V', "HSV Tuner", upperV)
+# cv2.namedWindow('HSV Tuner', cv2.WINDOW_AUTOSIZE)
+
+# cv2.createTrackbar('Lower H', "HSV Tuner", 0, 255, on_change)
+# cv2.createTrackbar('Higher H', "HSV Tuner", 0, 255, on_change)
+# cv2.createTrackbar('Lower S', "HSV Tuner", 0, 255, on_change)
+# cv2.createTrackbar('Higher S', "HSV Tuner", 0, 255, on_change)
+# cv2.createTrackbar('Lower V', "HSV Tuner", 0, 255, on_change)
+# cv2.createTrackbar('Higher V', "HSV Tuner", 0, 255, on_change)
+
+# cv2.setTrackbarPos('Lower H', "HSV Tuner", lowerH)
+# cv2.setTrackbarPos('Higher H', "HSV Tuner", upperH)
+# cv2.setTrackbarPos('Lower S', "HSV Tuner", lowerS)
+# cv2.setTrackbarPos('Higher S', "HSV Tuner", upperS)
+# cv2.setTrackbarPos('Lower V', "HSV Tuner", lowerV)
+# cv2.setTrackbarPos('Higher V', "HSV Tuner", upperV)
 
 # transformationMatrix = getTransform(cameraElevation)
 
@@ -744,14 +749,14 @@ while True:
     ctrl.setManualExposure(expTime, sensIso)
     controlQueue.send(ctrl)
 
-    lowerH = cv2.getTrackbarPos('Lower H', "HSV Tuner")
-    upperH = cv2.getTrackbarPos('Higher H', "HSV Tuner")
+    # lowerH = cv2.getTrackbarPos('Lower H', "HSV Tuner")
+    # upperH = cv2.getTrackbarPos('Higher H', "HSV Tuner")
 
-    lowerS = cv2.getTrackbarPos('Lower S', "HSV Tuner")
-    upperS = cv2.getTrackbarPos('Higher S', "HSV Tuner")
+    # lowerS = cv2.getTrackbarPos('Lower S', "HSV Tuner")
+    # upperS = cv2.getTrackbarPos('Higher S', "HSV Tuner")
 
-    lowerV = cv2.getTrackbarPos('Lower V', "HSV Tuner")
-    upperV = cv2.getTrackbarPos('Higher V', "HSV Tuner")
+    # lowerV = cv2.getTrackbarPos('Lower V', "HSV Tuner")
+    # upperV = cv2.getTrackbarPos('Higher V', "HSV Tuner")
     # getImuAngle()
 
     inDepth = depthQueue.get() # blocking call, will wait until a new data has arrived
@@ -823,7 +828,7 @@ while True:
             for depthData in spatialData:
                 index += 1
                 # print(index)
-                print(len(depthData.spatialCoordinates.z))
+                # print(len(depthData.spatialCoordinates.z))
                 roi = depthData.config.roi
                 roi = roi.denormalize(width=depthFrameColor.shape[1], height=depthFrameColor.shape[0])
                 xmin = int(roi.topLeft().x)
@@ -873,17 +878,20 @@ while True:
             targetCenterY = targetCenter[0][1]
             targetRadiusCheck = targetCenter[0][2]
 
+            publish(client, str(targetCenterX))
+        
+        # publish(client, "Hello")
+
             # if(abs(targetRadiusCheck - 576) > 100):
             #     print("Didn't get correct target")
             # else:
             # print("CenterX: " + str(targetCenterX) + "CenterY: " + str(targetCenterY))
 
         # print(xList)
-        publish(client, str(targetCenterX))
 
-        cv2.imshow("depth", depthFrameColor)
-        cv2.imshow("frame", frame)
-        cv2.imshow("mask", result)
+        # cv2.imshow("depth", depthFrameColor)
+        # cv2.imshow("frame", frame)
+        # cv2.imshow("mask", result)
 
     # newConfig = False
     key = cv2.waitKey(1)

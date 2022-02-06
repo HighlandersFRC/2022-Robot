@@ -25,16 +25,22 @@ import frc.robot.subsystems.Shooter;
 // NOTE:  Consider using this command inline, rather than writing a subclass.  For more
 // information, see:
 // https://docs.wpilib.org/en/stable/docs/software/commandbased/convenience-features.html
-public class ThreeBallAuto extends SequentialCommandGroup {
-  /** Creates a new ThreeBallAuto. */
+public class FiveBallAuto extends SequentialCommandGroup {
+  /** Creates a new FiveBallAuto. */
   private File pathingFile;
+  private File pathingFile2;
   private JSONArray pathJSON;
+  private JSONArray pathJSON2;
 
-  public ThreeBallAuto(Drive drive, Intake intake, Feeder feeder, Shooter shooter, LinearActuator linearActuator) {
+  public FiveBallAuto(Drive drive, Intake intake, Feeder feeder, Shooter shooter, LinearActuator linearActuator) {
     try {
       pathingFile = new File("/home/lvuser/deploy/Adj3Ball.json");
       FileReader scanner = new FileReader(pathingFile);
       pathJSON = new JSONArray(new JSONTokener(scanner));
+
+      pathingFile2 = new File("/home/lvuser/deploy/5BallAutoPart2.json");
+      FileReader scanner2 = new FileReader(pathingFile2);
+      pathJSON2 = new JSONArray(new JSONTokener(scanner2));
     }
     catch(Exception e) {
       System.out.println("ERROR WITH PATH FILE " + e);
@@ -42,7 +48,7 @@ public class ThreeBallAuto extends SequentialCommandGroup {
     // Add your commands in the addCommands() call, e.g.
     // addCommands(new FooCommand(), new BarCommand());
     addRequirements(drive, intake);
-    addCommands(new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2300), new ParallelRaceGroup(new ContinuousAccelerationInterpolation(drive, pathJSON), new IntakeBalls(intake)), new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2600));
+    addCommands(new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2300), new ParallelRaceGroup(new ContinuousAccelerationInterpolation(drive, pathJSON), new IntakeBalls(intake)), new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2600), new ParallelRaceGroup(new ContinuousAccelerationInterpolation(drive, pathJSON2), new IntakeBalls(intake)));
   }
 }
 
