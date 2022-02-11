@@ -1,5 +1,7 @@
+from cgitb import text
 import math
 from functools import cache
+from webbrowser import get
 import Point
 import Convert
 from File import File
@@ -25,9 +27,9 @@ class Draw:
         self.colorAccel = False
         self.xOffset = 315
         self.wheelList = [[], [], []]
-        self.lowerAccelBound = -9.8
         self.upperAccelBound = 9.8
         self.upperVelocBound = 5
+        self.optimizationTolerancePercent = 0.1
         self.points = points
         self.wheels = []
         self.samplePeriod = 0.01
@@ -64,6 +66,7 @@ class Draw:
         self.screen.blit(y, (120, 445))
 
     def drawPoints(self):
+        self.totalTime = Point.updatePointTimes()
         mousePosPixels = list(self.pygame.mouse.get_pos())
 
         if len(self.points) > 0:
@@ -97,6 +100,11 @@ class Draw:
         self.screen.blit(mouseCoords6, (5, 160))
         self.screen.blit(pointNum, (5, 20))
         self.drawMsg()
+
+        #Optimize button
+        # self.pygame.draw.rect(self.screen, (255, 255, 255), (1500, 440, 75, 50))
+        # optimize = self.font.render("Optim.", True, (0, 0, 0))
+        # self.screen.blit(optimize, (1505, 450))
 
         #Upload button
         self.pygame.draw.rect(self.screen, (255, 255, 255), (1050 + self.xOffset, 100, 100, 50))
@@ -146,7 +154,7 @@ class Draw:
 
         #Acceleration and Velocity Key
         if self.colorAccel:
-            lAccelBound = self.font.render(f"{self.lowerAccelBound} m/s^2", True, (255, 255, 255))
+            lAccelBound = self.font.render("0 m/s^2", True, (255, 255, 255))
             uAccelBound = self.font.render(f"{self.upperAccelBound} m/s^2", True, (255, 255, 255))
 
             self.screen.blit(uAccelBound, (1475, 255))
@@ -155,7 +163,7 @@ class Draw:
             self.pygame.draw.rect(self.screen, (255, 255, 255), (1497, 280, 50, 120), width=2)
 
             for i in range(117):
-                c = colorsys.hsv_to_rgb((117 - i) / 117, 1, 1)
+                c = colorsys.hsv_to_rgb(((117 - i) / 117) / 2 + 0.5, 1, 1)
                 c = tuple(255 * x for x in c)
                 self.pygame.draw.line(self.screen, c, (1499, 282 + i), (1545, 282 + i), 1)
 
@@ -349,6 +357,11 @@ class Draw:
         y = self.pygame.mouse.get_pos()[1]
         command = ''
 
+        #Optimize path
+        # if len(self.points) > 1:
+        #     if x >= 1500 and x <= 1575 and y >= 440 and y <= 490:
+        #         self.optimizePathTimes()
+
         #Upload path
         if x >= 1050 + self.xOffset and x <= 1150 + self.xOffset and y >= 100 and y <= 150:
             bool = Point.savePath(fileName)
@@ -407,14 +420,15 @@ class Draw:
         for p in self.points:
             val = val + str(p.x) + str(p.y) + str(p.time) + str(p.interpolationRange) + str(p.angle)
         m = hashlib.sha256(val.encode('utf-8')).hexdigest()
+        self.wheels = []
 
         while time <= endTime:
             posList = self.sampleInterpPos(time, str(m))
-            pixelPosList = list(Convert.getPixelPos(x) for x in posList)
+            self.wheels.append(posList)
 
             if self.showWheelPaths:
                 self.drawWheelColors(posList[1], posList[2], posList[3], posList[4], self.samplePeriod)
-            self.pygame.draw.circle(self.screen, (255, 0, 0), pixelPosList[0], 1)
+            self.pygame.draw.circle(self.screen, (255, 0, 0), Convert.getPixelPos(posList[0]), 1)
 
             time += self.samplePeriod
 
@@ -476,44 +490,35 @@ class Draw:
             blv2 = (Convert.getDist(self.wheelList[1][2][0], self.wheelList[1][2][1], self.wheelList[2][2][0], self.wheelList[2][2][1]) / samplePeriod)
             brv2 = (Convert.getDist(self.wheelList[1][3][0], self.wheelList[1][3][1], self.wheelList[2][3][0], self.wheelList[2][3][1]) / samplePeriod)
 
-            flA = (flv2 - flv1) / samplePeriod
-            frA = (frv2 - frv1) / samplePeriod
-            blA = (blv2 - blv1) / samplePeriod
-            brA = (brv2 - brv1) / samplePeriod
+            flA = abs((flv2 - flv1) / samplePeriod)
+            frA = abs((frv2 - frv1) / samplePeriod)
+            blA = abs((blv2 - blv1) / samplePeriod)
+            brA = abs((brv2 - brv1) / samplePeriod)
 
             upperAccelBound = self.upperAccelBound
-            lowerAccelBound = self.lowerAccelBound
 
             if flA > upperAccelBound:
                 flColor = (0, 0, 0)
-            elif flA < lowerAccelBound:
-                flColor = (0, 0, 0)
             else:
-                flColor = colorsys.hsv_to_rgb((flA + abs(lowerAccelBound)) / (upperAccelBound - lowerAccelBound), 1, 1)
+                flColor = colorsys.hsv_to_rgb(((flA / upperAccelBound) / 2) + 0.5, 1, 1)
                 flColor = tuple(255 * x for x in flColor)
 
             if frA > upperAccelBound:
                 frColor = (0, 0, 0)
-            elif frA < lowerAccelBound:
-                frColor = (0, 0, 0)
             else:
-                frColor = colorsys.hsv_to_rgb((frA + abs(lowerAccelBound)) / (upperAccelBound - lowerAccelBound), 1, 1)
+                frColor = colorsys.hsv_to_rgb(((frA / upperAccelBound) / 2) + 0.5, 1, 1)
                 frColor = tuple(255 * x for x in frColor)
 
             if blA > upperAccelBound:
                 blColor = (0, 0, 0)
-            elif blA < lowerAccelBound:
-                blColor = (0, 0, 0)
             else:
-                blColor = colorsys.hsv_to_rgb((blA + abs(lowerAccelBound)) / (upperAccelBound - lowerAccelBound), 1, 1)
+                blColor = colorsys.hsv_to_rgb(((blA / upperAccelBound) / 2) + 0.5, 1, 1)
                 blColor = tuple(255 * x for x in blColor)
 
             if brA > upperAccelBound:
                 brColor = (0, 0, 0)
-            elif brA < lowerAccelBound:
-                brColor = (0, 0, 0)
             else:
-                brColor = colorsys.hsv_to_rgb((brA + abs(lowerAccelBound)) / (upperAccelBound - lowerAccelBound), 1, 1)
+                brColor = colorsys.hsv_to_rgb(((brA / upperAccelBound) / 2) + 0.5, 1, 1)
                 brColor = tuple(255 * x for x in brColor)
 
         self.pygame.draw.circle(self.screen, flColor, fLp, 1)
@@ -537,10 +542,69 @@ class Draw:
         self.wheelList[0] = wheels
 
     def optimizePathTimes(self):
-        pass
 
-    def updateWheelList(self, wheels, time):
-        listLength = self.points[-1].time / time
+        for p in self.points:
+
+            if p.index == 0:
+                pass
+            else:
+                highestVel = 0
+                for i in range(len(self.wheels) - 1):
+                    if self.wheels[i][5] == p.index:
+                        if self.getWheelVelocities(self.wheels[i], self.wheels[i + 1], getHighest = True) > highestVel:
+                            highestVel = self.getWheelVelocities(self.wheels[i], self.wheels[i + 1], getHighest = True)
+                newTime = p.deltaTime * (highestVel / self.upperVelocBound)
+                p.deltaTime = newTime
+                # print(f"Change index {p.index} deltaTime to {newTime}")
+
+                highestAccel = 0
+                for i in range(len(self.wheels) - 2):
+                    if self.wheels[i][5] == p.index:
+                        if self.getWheelAccelerations(self.wheels[i], self.wheels[i + 1], self.wheels[i + 2], getHighest = True) > highestAccel:
+                            highestAccel = self.getWheelAccelerations(self.wheels[i], self.wheels[i + 1], self.wheels[i + 2], getHighest = True)
+                newTime = p.deltaTime * (highestAccel / self.upperAccelBound)
+                print(f"newTime Accel: {newTime}")
+                print(f"highestAccel: {highestAccel}")
+
+    def getWheelAccelerations(self, wheelSet1, wheelSet2, wheelSet3, getHighest = False):
+        vSet1 = list(n / self.samplePeriod for n in self.getWheelVelocities(wheelSet1, wheelSet2))
+        vSet2 = list(n / self.samplePeriod for n in self.getWheelVelocities(wheelSet2, wheelSet3))
+        
+
+        # print(f"vSet1: {vSet1}")
+        # print(f"vSet2: {vSet2}")
+
+        vChangeSet = [0, 0, 0, 0]
+        for i in range(4):
+            vChangeSet[i] = abs(vSet1[i] - vSet2[i])
+
+        if getHighest:
+            return max(vChangeSet)
+        else:
+            return vChangeSet
+        
+    def getWheelVelocities(self, wheelSet1, wheelSet2, getHighest = False):
+        fl1 = wheelSet1[1]
+        fr1 = wheelSet1[2]
+        bl1 = wheelSet1[3]
+        br1 = wheelSet1[4]
+
+        fl2 = wheelSet2[1]
+        fr2 = wheelSet2[2]
+        bl2 = wheelSet2[3]
+        br2 = wheelSet2[4]
+
+        flv = Convert.getDistPoints(fl1, fl2) / self.samplePeriod
+        frv = Convert.getDistPoints(fr1, fr2) / self.samplePeriod
+        blv = Convert.getDistPoints(bl1, bl2) / self.samplePeriod
+        brv = Convert.getDistPoints(br1, br2) / self.samplePeriod
+
+        if getHighest:
+            maxVel = max(flv, frv, blv, brv)
+            # print(f"MaxVel: {maxVel}")
+            return maxVel
+        else:
+            return [flv, frv, blv, brv]
 
     @cache
     def getWheelsAtPoint(self, center, angle):
@@ -568,7 +632,7 @@ class Draw:
         currentPointIndex = 0
         lowestTimeDiff = 0
         wheels = []
-
+        nextPointIndex = 0
         timeDiffArray = []
 
         #If path has more than 1 point, find 2 points given time is between
@@ -577,6 +641,8 @@ class Draw:
                 if p.time <= time and self.points[p.index + 1].time > time:
                     p1 = p
                     p2 = self.points[p.index + 1]
+
+                    nextPointIndex = p2.index
 
                     if p1.angle >= p2.angle:
                         op2 = ((pi * 2) - (p1.angle - p2.angle))
@@ -593,6 +659,10 @@ class Draw:
                         difWheelTheta = op2
 
                     wheelTheta = (p1.angle + ((difWheelTheta * ((time - p1.time) / (p2.time - p1.time))) * sine)) % (pi * 2)
+        else:
+            wheels = self.getWheelsAtPoint((self.points[0].x, self.points[0].y), self.points[0].angle)
+            wheels.append(nextPointIndex)
+            return wheels
 
         #Setting time diff array
         if len(self.points) > 1:
@@ -614,12 +684,14 @@ class Draw:
         if time >= self.points[-1].time:
             p = self.points[-1]
             wheels = self.getWheelsAtPoint((p.x, p.y), p.angle)
+            wheels.append(nextPointIndex)
             return wheels
 
         #If time is before first point
         if time < self.points[0].time:
             p = self.points[0]
             wheels = self.getWheelsAtPoint((p.x, p.y), p.angle)
+            wheels.append(nextPointIndex)
             return wheels
 
         currentPoint = self.points[currentPointIndex]
@@ -636,6 +708,7 @@ class Draw:
             y = p2.y + (vY * (time - p2.time))
 
             wheels = self.getWheelsAtPoint((x, y), wheelTheta)
+            wheels.append(nextPointIndex)
             return wheels
 
         #If current point is the first point
@@ -650,6 +723,7 @@ class Draw:
             y = p1.y + (vY * (time - p1.time))
 
             wheels = self.getWheelsAtPoint((x, y), wheelTheta)
+            wheels.append(nextPointIndex)
             return wheels
 
         p1 = self.points[currentPointIndex - 1]
@@ -664,8 +738,8 @@ class Draw:
 
         tau = min(timeDif1, timeDif2)
 
-        t1 = p2.time - (1 - interpFactor) * tau
-        t2 = p2.time + (1 - interpFactor) * tau
+        t1 = p2.time - (interpFactor * tau)
+        t2 = p2.time + (interpFactor * tau)
 
         timeRatio = (p2.time - p1.time) / (p3.time - p2.time)
         
@@ -687,6 +761,7 @@ class Draw:
             y = p1.y + (v1Y * (time - p1.time))
 
             wheels = self.getWheelsAtPoint((x, y), wheelTheta)
+            wheels.append(nextPointIndex)
             return wheels
 
         #If on the line segment between current point and next point
@@ -695,6 +770,7 @@ class Draw:
             x = p2.x + (v2X * (time - p2.time))
             y = p2.y + (v2Y * (time - p2.time))
             wheels = self.getWheelsAtPoint((x, y), wheelTheta)
+            wheels.append(nextPointIndex)
             return wheels
 
         #If inside the interpolation range
@@ -713,4 +789,5 @@ class Draw:
             y = ((accelY / 2) * (interpTime ** 2)) + (v1Y * interpTime) + t1Y
 
             wheels = self.getWheelsAtPoint((x, y), wheelTheta)
+            wheels.append(nextPointIndex)
             return wheels

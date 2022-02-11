@@ -32,6 +32,14 @@ def getPixelPos(point):
 def getDist(x1, y1, x2, y2):
     return math.sqrt( ( (x1 - x2) * (x1 - x2) ) + ( (y1 - y2) * (y1 - y2) ) )
 
+def getDistPoints(point1, point2):
+    x1 = list(point1)[0]
+    y1 = list(point1)[1]
+    x2 = list(point2)[0]
+    y2 = list(point2)[1]
+
+    return math.sqrt( ( (x1 - x2) * (x1 - x2) ) + ( (y1 - y2) * (y1 - y2) ) )
+
 def getXY(r, theta, offsetX, offsetY):
     x = offsetX + r * math.cos(theta)
     y = offsetY + r * math.sin(theta)

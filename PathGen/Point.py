@@ -42,7 +42,7 @@ def clicked(mousePos, fieldWidth, fieldHeight, pygame, selectedPoint, imgWidth, 
        if len(points) == 0:
             points.append( Point(mousePos[0], mousePos[1], fieldWidth, fieldHeight, 0.0, 0.0, 0.0, 0.0, 0.0, (255, 0, 0)))
        else:
-            points.append( Point(mousePos[0], mousePos[1], fieldWidth, fieldHeight, 0.0, 0.0, 0.0, 1.0, 0.75, (255, 0, 0)))
+            points.append( Point(mousePos[0], mousePos[1], fieldWidth, fieldHeight, 0.0, 0.0, 0.0, 1.0, 0.2, (255, 0, 0)))
             draw.setTotalTime(updatePointTimes())
     return selectedPoint
 
