@@ -12,6 +12,7 @@ import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.revrobotics.CANSparkMax.IdleMode;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.commands.defaults.IntakeDefault;
@@ -40,9 +41,9 @@ public class Shooter extends SubsystemBase {
     // rightShooter.enableVoltageCompensation(true);
     // rightShooter.setSensorPhase(true);
     // rightShooter.selectProfileSlot(0, 0);
-    rightShooter.config_kF(0, 0);
-    rightShooter.config_kP(0, 0.17);
-    rightShooter.config_kI(0, 0.001);
+    rightShooter.config_kF(0, 0.002);
+    rightShooter.config_kP(0, 1);
+    rightShooter.config_kI(0, 0.0001);
     rightShooter.config_kD(0, 0);
     leftShooter.set(ControlMode.Follower, 9);
     setDefaultCommand(new ShooterDefault(this));
@@ -60,9 +61,7 @@ public class Shooter extends SubsystemBase {
   }
 
   public void setShooterRPM(double rpm) {
-    System.out.println(Constants.shooterRPMToUnitsPer100MS(rpm));
     rightShooter.set(ControlMode.Velocity, Constants.shooterRPMToUnitsPer100MS(rpm));
-
     // rightShooter.set(ControlMode.PercentOutput, 0.5);
 }
 

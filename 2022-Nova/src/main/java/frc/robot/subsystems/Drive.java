@@ -80,6 +80,7 @@ public class Drive extends SubsystemBase {
     double initAngle;
     double setAngle;
     double diffAngle;
+    int pathNum = 1;
 
     public Drive(Peripherals peripherals) {
         this.peripherals = peripherals;
@@ -134,6 +135,41 @@ public class Drive extends SubsystemBase {
         System.out.println("|||||| Angle Set to: " + (peripherals.getNavxAngle()));
         m_odometry.resetPosition(new Pose2d(new Translation2d(pathPoints.getJSONObject(0).getDouble("x"), pathPoints.getJSONObject(0).getDouble("y")),  new Rotation2d(firstPointAngle)), new Rotation2d(firstPointAngle));
     }
+
+    public JSONArray getJSONTurnPath() {
+        double turnAngle = peripherals.getVisionArray()[1];
+
+        JSONObject point1 = new JSONObject();
+        point1.put("x", getOdometryX());
+        point1.put("y", getOdometryY());
+        point1.put("angle", getOdometryAngle());
+        point1.put("time", 0.0);
+
+        JSONObject point2 = new JSONObject();
+        point2.put("x", getOdometryX());
+        point2.put("y", getOdometryY());
+        point2.put("angle", getOdometryAngle() + turnAngle);
+        point2.put("time", 1);
+
+        JSONArray turnPath = new JSONArray();
+        turnPath.put(point1);
+        turnPath.put(point2);
+
+        System.out.println("|");
+        System.out.println("|");
+        System.out.println("|");
+        System.out.println("|");
+        System.out.println("TurnPath (Drive): " + turnPath);
+        System.out.println("|");
+        System.out.println("|");
+        System.out.println("|");
+        System.out.println("|");
+
+        pathNum ++;
+
+
+        return turnPath;
+    } 
 
     public double getOdometryX() {
         return m_odometry.getPoseMeters().getX();
@@ -206,7 +242,7 @@ public class Drive extends SubsystemBase {
 
         Vector controllerVector = new Vector(xSpeed, ySpeed);
 
-        System.out.println("NAVX: " + peripherals.getNavxAngle());
+        //System.out.println("NAVX: " + peripherals.getNavxAngle());
         m_pose = m_odometry.update(new Rotation2d((navxOffset)), leftFront.getState((navxOffset)), rightFront.getState((navxOffset)), leftBack.getState((navxOffset)), rightBack.getState((navxOffset)));
 
         leftFront.velocityDrive(controllerVector, turn, navxOffset);

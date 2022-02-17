@@ -48,7 +48,7 @@ public class FiveBallAuto extends SequentialCommandGroup {
     // Add your commands in the addCommands() call, e.g.
     // addCommands(new FooCommand(), new BarCommand());
     addRequirements(drive, intake);
-    addCommands(new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2300), new ParallelRaceGroup(new ContinuousAccelerationInterpolation(drive, pathJSON), new IntakeBalls(intake)), new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2600), new ParallelRaceGroup(new ContinuousAccelerationInterpolation(drive, pathJSON2), new IntakeBalls(intake)));
+    addCommands(new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2300), new ParallelRaceGroup(new ContinuousAccelerationInterpolation(drive, pathJSON, false), new IntakeBalls(intake)), new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2600), new ParallelRaceGroup(new ContinuousAccelerationInterpolation(drive, pathJSON2, false), new IntakeBalls(intake)));
   }
 }
 

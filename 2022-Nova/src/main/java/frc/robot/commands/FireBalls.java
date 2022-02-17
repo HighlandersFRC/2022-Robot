@@ -27,7 +27,7 @@ public class FireBalls extends SequentialCommandGroup {
           new SetHoodPosition(linearActuator, hoodPosition)
       ),
       new WaitCommand(2),
-      new EjectBalls(feeder, 0.4, 2),
+      new EjectBalls(feeder, 0.35, 2),
       new EjectBalls(feeder, 0.0, 0.1)
     );
   }

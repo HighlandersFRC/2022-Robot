@@ -53,14 +53,18 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
 
     private double[] desiredVelocityArray = new double[3];
     private double desiredThetaChange = 0;
+    private boolean generateTurnPath;
+    private double turnAngle;
 
     // private Peripherals peripherals = new Peripherals();
 
     private double cyclePeriod = 1.0/50.0;
 
-    public ContinuousAccelerationInterpolation(Drive drive, JSONArray path) {
+    public ContinuousAccelerationInterpolation(Drive drive, JSONArray path, boolean generateTurnPath) {
       this.drive = drive;
       this.pathPointsJSON = path;
+      this.generateTurnPath = generateTurnPath;
+      this.turnAngle = turnAngle;
       addRequirements(this.drive);
         // Use addRequirements() here to declare subsystem dependencies.
     }
@@ -68,6 +72,11 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     // Called when the command is initially scheduled.
     @Override
     public void initialize() {
+
+      if (generateTurnPath) {
+        this.pathPointsJSON = drive.getJSONTurnPath();
+      }
+
       estimatedX = drive.getOdometryX();
       estimatedY = drive.getOdometryY();
       estimatedTheta = drive.getOdometryAngle();
@@ -78,7 +87,7 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
 
       currentX = drive.getOdometryX();
       currentY = drive.getOdometryY();
-      currentTheta = drive.getPeripheralsAngle();
+      currentTheta = Math.toRadians(drive.getPeripheralsAngle());
 
       previousX = currentX;
       previousY = currentY;
@@ -96,6 +105,7 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
+    System.out.println("Pathing...");
     // get odometry positions
     currentX = drive.getOdometryX();
     currentY = drive.getOdometryY();

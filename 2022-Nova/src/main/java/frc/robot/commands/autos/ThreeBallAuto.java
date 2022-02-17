@@ -32,7 +32,7 @@ public class ThreeBallAuto extends SequentialCommandGroup {
 
   public ThreeBallAuto(Drive drive, Intake intake, Feeder feeder, Shooter shooter, LinearActuator linearActuator) {
     try {
-      pathingFile = new File("/home/lvuser/deploy/Adj3Ball.json");
+      pathingFile = new File("/home/lvuser/deploy/TurnTest.json");
       FileReader scanner = new FileReader(pathingFile);
       pathJSON = new JSONArray(new JSONTokener(scanner));
     }
@@ -42,7 +42,7 @@ public class ThreeBallAuto extends SequentialCommandGroup {
     // Add your commands in the addCommands() call, e.g.
     // addCommands(new FooCommand(), new BarCommand());
     addRequirements(drive, intake);
-    addCommands(new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2300), new ParallelRaceGroup(new ContinuousAccelerationInterpolation(drive, pathJSON), new IntakeBalls(intake)), new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2600));
+    addCommands(new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2300), new ParallelRaceGroup(new ContinuousAccelerationInterpolation(drive, pathJSON, false), new IntakeBalls(intake)), new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2600));
   }
 }
 

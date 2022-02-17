@@ -12,22 +12,31 @@ import edu.wpi.first.wpilibj.SPI.Port;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.commands.defaults.PeripheralsDefault;
 import frc.robot.sensors.Navx;
+import frc.robot.sensors.VisionCamera;
 
 public class Peripherals extends SubsystemBase {
   private final AHRS ahrs = new AHRS(Port.kMXP);
 
   private final Navx navx = new Navx(ahrs);
 
+  private final VisionCamera visionCamera = new VisionCamera();
+
+  private MqttSubscribe mqttSubscribe;
+
   private final PowerDistribution m_pdh = new PowerDistribution(1, ModuleType.kRev);
   /** Creates a new Peripherals. */
-  public Peripherals() {
-   
+  public Peripherals(MqttSubscribe mqttSubscribe) {
+   this.mqttSubscribe = mqttSubscribe;
   }
 
   public void init() {
     System.out.print("INSIDE PERIPHERALS INIT");
     zeroNavx();
     setDefaultCommand(new PeripheralsDefault(this));
+  }
+
+  public double[] getVisionArray() {
+    return visionCamera.getVisionArray(mqttSubscribe.getLatestMessage());
   }
 
   public void turnLightRingOn() {

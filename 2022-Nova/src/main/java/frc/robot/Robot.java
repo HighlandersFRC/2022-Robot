@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.commands.FaceTarget;
 import frc.robot.commands.ClimbRobot;
 import frc.robot.commands.ContinuousAccelerationInterpolation;
 import frc.robot.commands.EjectBalls;
@@ -50,8 +51,8 @@ public class Robot extends TimedRobot {
 
   ContinuousAccelerationInterpolation testPath;
 
-  private final Peripherals peripherals = new Peripherals();
-  private final Drive drive = new Drive(peripherals);
+  
+  
   private final Shooter shooter = new Shooter();
   private final LinearActuator linearActuator = new LinearActuator();
   private final Feeder feeder = new Feeder();
@@ -64,6 +65,10 @@ public class Robot extends TimedRobot {
 
   private MqttPublish publish = new MqttPublish();
   private MqttSubscribe subscribe = new MqttSubscribe();
+
+  private final Peripherals peripherals = new Peripherals(subscribe);
+
+  private final Drive drive = new Drive(peripherals);
 
   private ThreeBallAuto threeBallAuto = new ThreeBallAuto(drive, intake, feeder, shooter, linearActuator);
 
@@ -88,7 +93,7 @@ public class Robot extends TimedRobot {
     m_robotContainer = new RobotContainer();
 
     try {
-      pathingFile = new File("/home/lvuser/deploy/Adj3Ball.json");
+      pathingFile = new File("/home/lvuser/deploy/TurnTest.json");
       FileReader scanner = new FileReader(pathingFile);
       pathJSON = new JSONArray(new JSONTokener(scanner));
       System.out.println(pathJSON);
@@ -177,9 +182,10 @@ public class Robot extends TimedRobot {
     // OI.driverY.whileHeld(new SetHoodPosition(linearActuator, 0.6));
 
     OI.driverA.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator, 0, 1500));
-    OI.driverB.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator, 0.3, 2000));
-    OI.driverY.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator, 0.5, 2500));
-    OI.driverX.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator, 0.7, 3000));
+    OI.driverB.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator, 0.3, 3150));
+    OI.driverX.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator, 0.7, 2500));
+
+    OI.driverY.whenPressed(new FaceTarget(drive, Math.PI / 4));
   
 
     // OI.driverB.whileHeld(new SpinShooter(shooter, 0.5));
@@ -195,7 +201,7 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    System.out.println(peripherals.getNavxAngle());
+    //System.out.println(peripherals.getNavxAngle());
     // System.out.println(pathJSON.toString());
     //    try{
     //   bw.write(Timer.getFPGATimestamp() - startTime + ",");
@@ -207,6 +213,7 @@ public class Robot extends TimedRobot {
     // }
     SmartDashboard.putNumber("Controller Y", OI.getDriverLeftY());
     SmartDashboard.putNumber("Controller X", OI.getDriverLeftX());
+    SmartDashboard.putNumber("RPM", shooter.getShooterRPM());
   }
 
   @Override

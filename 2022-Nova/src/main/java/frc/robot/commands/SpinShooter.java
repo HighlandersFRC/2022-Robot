@@ -38,6 +38,9 @@ public class SpinShooter extends CommandBase {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return true;
+    if(Math.abs(shooter.getShooterRPM() - rpm) < 25) {
+      return true;
+    }
+    return false;
   }
 }
