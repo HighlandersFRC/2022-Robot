@@ -33,6 +33,8 @@ public class RobotCoordinateCalculator {
             double targetAngleInFrame = targetCenterCoordinates[1];
             // System.out.println("HELLOOOOO");
 
+            double confidenceFactor = targetCenterCoordinates[2];
+
             double totalAngle = angleFromTarget + targetAngleInFrame;
 
             // System.out.println("Distance: " + distToTarget + " Angle: " + navxAngle);
@@ -47,6 +49,7 @@ public class RobotCoordinateCalculator {
 
             fieldCoordinateArray[0] = fieldXCoordinate;
             fieldCoordinateArray[1] = fieldYCoordinate;
+            fieldCoordinateArray[2] = confidenceFactor;
 
             // System.out.println("ADFASHDKflasjdf" + fieldCoordinateArray);
 
@@ -57,6 +60,7 @@ public class RobotCoordinateCalculator {
         }
         fieldCoordinateArray[0] = 0;
         fieldCoordinateArray[1] = 0;
+        fieldCoordinateArray[2] = 0;
         // System.out.println("NOT GETTING ANYTHING " + fieldCoordinateArray);
         return fieldCoordinateArray;
     }

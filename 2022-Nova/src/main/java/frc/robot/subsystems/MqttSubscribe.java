@@ -36,6 +36,7 @@ public class MqttSubscribe implements MqttCallback  {
 	}
 
     public String getLatestMessage() {
+		System.out.println(latestMessage);
         return latestMessage;
     }
 
@@ -99,9 +100,9 @@ public class MqttSubscribe implements MqttCallback  {
 
 	public void messageArrived(String topic, MqttMessage message) throws Exception {
         latestMessage = message.toString();
-		System.out.println("| Topic:" + topic);
-		System.out.println("| Message: " +message.toString());
-		System.out.println("-------------------------------------------------");
+		// System.out.println("| Topic:" + topic);
+		// System.out.println("| Message: " +message.toString());
+		// System.out.println("-------------------------------------------------");
 
 	}
 

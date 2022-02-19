@@ -49,6 +49,10 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     private double currentYVelocity = 0;
     private double currentThetaVelocity = 0;
 
+    private double odometryFusedX = 0;
+    private double odometryFusedY = 0;
+    private double odometryFusedTheta = 0;
+
     private JSONArray pathPointsJSON;
 
     private double[] desiredVelocityArray = new double[3];
@@ -77,26 +81,6 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
         this.pathPointsJSON = drive.getJSONTurnPath();
       }
 
-      estimatedX = drive.getOdometryX();
-      estimatedY = drive.getOdometryY();
-      estimatedTheta = drive.getOdometryAngle();
-
-      previousEstimateX = estimatedX;
-      previousEstimateY = estimatedY;
-      previousEstimateTheta = estimatedTheta;
-
-      currentX = drive.getOdometryX();
-      currentY = drive.getOdometryY();
-      currentTheta = Math.toRadians(drive.getPeripheralsAngle());
-
-      previousX = currentX;
-      previousY = currentY;
-      previousTheta = currentTheta;
-
-      averagedX = (estimatedX + currentX)/2;
-      averagedY = (estimatedY + currentY)/2;
-      averagedTheta = (estimatedTheta + currentTheta)/2;
-
       initTime = Timer.getFPGATimestamp();
       // System.out.println("Time: " + currentTime + " Angle: " + drive.getOdometryAngle() + " OdometryX: " + currentX + " PredictedX: " + estimatedX + " OdometryY: " + currentY + " PredictedY: " + estimatedY);
 
@@ -107,9 +91,13 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
   public void execute() {
     System.out.println("Pathing...");
     // get odometry positions
-    currentX = drive.getOdometryX();
-    currentY = drive.getOdometryY();
-    currentTheta = drive.getOdometryAngle();
+    // currentX = drive.getOdometryX();
+    // currentY = drive.getOdometryY();
+    // currentTheta = drive.getOdometryAngle();
+
+    odometryFusedX = drive.getFusedOdometryX();
+    odometryFusedY = drive.getFusedOdometryY();
+    odometryFusedTheta = drive.getFusedOdometryTheta();
 
     currentTime = Timer.getFPGATimestamp() - initTime;
     timeDiff = currentTime - previousTime;
@@ -119,22 +107,22 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     currentYVelocity = (currentY - previousY)/timeDiff;
     currentThetaVelocity = (currentTheta - previousTheta)/timeDiff;
 
-    // determine estimated position by integrating current velocity by time and adding previous estimated position
-    estimatedX = previousEstimateX + (cyclePeriod * currentXVelocity);
-    estimatedY = previousEstimateY + (cyclePeriod * currentYVelocity);
-    estimatedTheta = previousEstimateTheta + (cyclePeriod * currentThetaVelocity);
+    // // determine estimated position by integrating current velocity by time and adding previous estimated position
+    // estimatedX = previousEstimateX + (cyclePeriod * currentXVelocity);
+    // estimatedY = previousEstimateY + (cyclePeriod * currentYVelocity);
+    // estimatedTheta = previousEstimateTheta + (cyclePeriod * currentThetaVelocity);
 
-    // average the odometry position with estimated position
-    averagedX = (estimatedX + currentX)/2;
-    averagedY = (estimatedY + currentY)/2;
-    averagedTheta = (estimatedTheta + currentTheta)/2;
+    // // average the odometry position with estimated position
+    // averagedX = (estimatedX + currentX)/2;
+    // averagedY = (estimatedY + currentY)/2;
+    // averagedTheta = (estimatedTheta + currentTheta)/2;
 
     // System.out.println("Time: " + currentTime + " Angle: " + Math.toDegrees(currentTheta) + " OdometryX: " + currentX + " OdometryY: " + currentY);
     // System.out.println()
     // System.out.println("Time: " + currentTime + " " + drive.getDriveOdometry());
 
     // call ConstantAccelerationInterpolation function
-    desiredVelocityArray = drive.constantAccelerationInterpolation(averagedX, averagedY, currentTheta, currentXVelocity, currentYVelocity, currentThetaVelocity, currentTime, timeDiff, pathPointsJSON);
+    desiredVelocityArray = drive.constantAccelerationInterpolation(odometryFusedX, odometryFusedY, odometryFusedTheta, currentXVelocity, currentYVelocity, currentThetaVelocity, currentTime, timeDiff, pathPointsJSON);
     
     // create velocity vector and set desired theta change
     Vector velocityVector = new Vector(desiredVelocityArray[0], desiredVelocityArray[1]);
@@ -150,9 +138,9 @@ public class ContinuousAccelerationInterpolation extends CommandBase {
     previousY = currentY;
     previousTheta = currentTheta;
     previousTime = currentTime;
-    previousEstimateX = estimatedX;
-    previousEstimateY = estimatedY;
-    previousEstimateTheta = estimatedTheta;
+    // previousEstimateX = estimatedX;
+    // previousEstimateY = estimatedY;
+    // previousEstimateTheta = estimatedTheta;
 
     // System.out.println("ODOMETRY ANGLE: " + currentTheta + " THETA CHANGE" + desiredThetaChange);
   }

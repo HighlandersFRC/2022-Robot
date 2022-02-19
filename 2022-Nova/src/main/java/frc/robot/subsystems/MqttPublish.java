@@ -18,19 +18,19 @@ public class MqttPublish {
 
     }
 
-    public void publish(String topic) {
+    public void publish(String topic, MqttMessage message) {
         Runnable task = 
         () -> {
             try {
                 MqttClient sampleClient = new MqttClient(broker, clientId, persistence);
                 MqttConnectOptions connOpts = new MqttConnectOptions();
                 connOpts.setCleanSession(true);
-                System.out.println("Connecting to broker: "+broker);
+                // System.out.println("Connecting to broker: "+broker);
                 sampleClient.connect(connOpts);
-                System.out.println("Connected");
-                System.out.println("Publishing message: "+content);
+                // System.out.println("Connected");
+                // System.out.println("Publishing message: "+content);
                 while(true) {
-                    MqttMessage message = new MqttMessage(content.getBytes());
+                    // MqttMessage message = new MqttMessage(content.getBytes());
                     message.setQos(qos);
                     sampleClient.publish(topic, message);
                     System.out.println("Message published");

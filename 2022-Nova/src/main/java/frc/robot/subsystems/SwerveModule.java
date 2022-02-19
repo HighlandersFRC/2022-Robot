@@ -197,6 +197,7 @@ public class SwerveModule extends SubsystemBase {
     // method to determine the angle of each wheel and the percent to set each module to
     // speedVector is a <x, y> ground speed relative to the field measured in meters/second, turnRate is in radians/second relative to the robot(positive is counterclockwise), navxOffset is in radians(positive is counterclockwise)
     public void velocityDrive(Vector speedVector, double turnRate, double navxOffset) {
+        // drive.updateOdometryFusedArray();
         if(Math.abs(speedVector.getI()) < 0.0001 && Math.abs(speedVector.getJ()) < 0.0001 && Math.abs(turnRate) < 0.01) {
             driveMotor.set(ControlMode.Velocity, 0.0);
             // angleMotor.set(ControlMode.PercentOutput, 0);

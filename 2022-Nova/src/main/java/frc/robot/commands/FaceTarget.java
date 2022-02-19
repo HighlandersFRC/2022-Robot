@@ -12,10 +12,10 @@ public class FaceTarget extends SequentialCommandGroup {
   private double turnAngle;
   private JSONArray turnPath;
 
-  public FaceTarget(Drive drive, double turnAngle) {
+  public FaceTarget(Drive drive) {
 
     this.drive = drive;
-    this.turnAngle = turnAngle;
+    // this.turnAngle = turnAngle;
     addRequirements(this.drive);
 
     //this.turnPath = this.drive.getJSONTurnPath(this.turnAngle);

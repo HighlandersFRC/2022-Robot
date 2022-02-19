@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.commands.FaceTarget;
 import frc.robot.commands.ClimbRobot;
 import frc.robot.commands.ContinuousAccelerationInterpolation;
+import frc.robot.commands.DriveAlignedToTarget;
 import frc.robot.commands.EjectBalls;
 import frc.robot.commands.FireBalls;
 import frc.robot.commands.IntakeBalls;
@@ -68,7 +69,7 @@ public class Robot extends TimedRobot {
 
   private final Peripherals peripherals = new Peripherals(subscribe);
 
-  private final Drive drive = new Drive(peripherals);
+  private final Drive drive = new Drive(peripherals, publish);
 
   private ThreeBallAuto threeBallAuto = new ThreeBallAuto(drive, intake, feeder, shooter, linearActuator);
 
@@ -93,7 +94,7 @@ public class Robot extends TimedRobot {
     m_robotContainer = new RobotContainer();
 
     try {
-      pathingFile = new File("/home/lvuser/deploy/TurnTest.json");
+      pathingFile = new File("/home/lvuser/deploy/Adj3Ball.json");
       FileReader scanner = new FileReader(pathingFile);
       pathJSON = new JSONArray(new JSONTokener(scanner));
       System.out.println(pathJSON);
@@ -185,8 +186,9 @@ public class Robot extends TimedRobot {
     OI.driverB.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator, 0.3, 3150));
     OI.driverX.whenPressed(new FireBalls(intake, feeder, shooter, linearActuator, 0.7, 2500));
 
-    OI.driverY.whenPressed(new FaceTarget(drive, Math.PI / 4));
-  
+    OI.driverY.whenPressed(new FaceTarget(drive));
+
+    OI.driveStartButton.whileHeld(new DriveAlignedToTarget(drive, peripherals));
 
     // OI.driverB.whileHeld(new SpinShooter(shooter, 0.5));
 

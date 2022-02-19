@@ -9,13 +9,21 @@ public class VisionCamera {
     }
 
     public double[] getVisionArray(String message) {
-        double[] visionArray = new double[2];
+        double[] visionArray = new double[3];
 
         try {
             JSONObject jsonString = new JSONObject(message);
 
             visionArray[0] = jsonString.getDouble("Distance");
             visionArray[1] = jsonString.getDouble("Angle");
+
+            if(visionArray[0] > 160) {
+                visionArray[2] = jsonString.getDouble("Confidence");
+            }
+            else {
+                visionArray[2] = 0;
+            }
+
 
             // System.out.println(visionArray[0]);
 
@@ -27,6 +35,7 @@ public class VisionCamera {
 
         visionArray[0] = -1;
         visionArray[1] = -100;
+        visionArray[2] = 0;
         return visionArray;
         
     }

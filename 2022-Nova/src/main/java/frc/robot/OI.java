@@ -23,6 +23,8 @@ public class OI {
     public static JoystickButton operatorX = new JoystickButton(operatorController, 3);
     public static JoystickButton operatorB = new JoystickButton(operatorController, 2);
 
+    public static JoystickButton driveStartButton = new JoystickButton(driverController, 8);
+
 
     public static double getDriverLeftX() {
         return driverController.getLeftX();

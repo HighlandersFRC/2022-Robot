@@ -6,6 +6,7 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.sensors.CANCoder;
 
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -14,6 +15,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -45,6 +47,7 @@ public class Drive extends SubsystemBase {
     private final WPI_TalonFX rightBackAngleMotor = new WPI_TalonFX(8);
 
     private Peripherals peripherals;
+    private MqttPublish publish;
 
     private double adjustedX = 0.0;
     private double adjustedY = 0.0;
@@ -69,6 +72,40 @@ public class Drive extends SubsystemBase {
     Translation2d m_backLeftLocation = new Translation2d(-moduleXY, moduleXY);
     Translation2d m_backRightLocation = new Translation2d(-moduleXY, -moduleXY);
 
+    private double currentX = 0;
+    private double currentY = 0;
+    private double currentTheta = 0;
+
+    private double estimatedX = 0.0;
+    private double estimatedY = 0.0;
+    private double estimatedTheta = 0.0;
+
+    private double previousEstimateX = 0.0;
+    private double previousEstimateY = 0.0;
+    private double previousEstimateTheta = 0.0;
+
+    private double averagedX = 0.0;
+    private double averagedY = 0.0;
+    private double averagedTheta = 0.0;
+
+    private double initTime;
+    private double currentTime;
+    private double previousTime;
+    private double timeDiff;
+
+    private double previousX = 0;
+    private double previousY = 0;
+    private double previousTheta = 0;
+
+    private double currentXVelocity = 0;
+    private double currentYVelocity = 0;
+    private double currentThetaVelocity = 0;
+
+    private double targetCenterX = 8.2296;
+    private double targetCenterY = 4.1148;
+
+    private double[] currentFusedOdometry = new double[3];
+
     // Creating my kinematics object using the module locations
     SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
     m_frontLeftLocation, m_frontRightLocation, m_backLeftLocation, m_backRightLocation
@@ -82,8 +119,9 @@ public class Drive extends SubsystemBase {
     double diffAngle;
     int pathNum = 1;
 
-    public Drive(Peripherals peripherals) {
+    public Drive(Peripherals peripherals, MqttPublish publish) {
         this.peripherals = peripherals;
+        this.publish = publish;
 
         m_odometry = new SwerveDriveOdometry(m_kinematics, new Rotation2d(Math.toRadians(peripherals.getNavxAngle())));
     }
@@ -131,24 +169,47 @@ public class Drive extends SubsystemBase {
     public void autoInit(JSONArray pathPoints) {
         double firstPointAngle = pathPoints.getJSONObject(0).getDouble("angle");
         peripherals.setNavxAngle(Math.toDegrees(firstPointAngle));
-        // double navxAngleRadians  = Math.toRadians(peripherals.getNavxAngle());
-        System.out.println("|||||| Angle Set to: " + (peripherals.getNavxAngle()));
         m_odometry.resetPosition(new Pose2d(new Translation2d(pathPoints.getJSONObject(0).getDouble("x"), pathPoints.getJSONObject(0).getDouble("y")),  new Rotation2d(firstPointAngle)), new Rotation2d(firstPointAngle));
+        
+        estimatedX = getOdometryX();
+        estimatedY = getOdometryY();
+        estimatedTheta = getOdometryAngle();
+
+        previousEstimateX = estimatedX;
+        previousEstimateY = estimatedY;
+        previousEstimateTheta = estimatedTheta;
+
+        currentX = getOdometryX();
+        currentY = getOdometryY();
+        currentTheta = getOdometryAngle();
+
+        previousX = currentX;
+        previousY = currentY;
+        previousTheta = currentTheta;
+
+        averagedX = (estimatedX + currentX)/2;
+        averagedY = (estimatedY + currentY)/2;
+        averagedTheta = (estimatedTheta + currentTheta)/2;
+
+        initTime = Timer.getFPGATimestamp();
     }
 
     public JSONArray getJSONTurnPath() {
-        double turnAngle = peripherals.getVisionArray()[1];
+        double fusedOdometryX = getFusedOdometryX();
+        double fusedOdometryY = getFusedOdometryY();
 
         JSONObject point1 = new JSONObject();
-        point1.put("x", getOdometryX());
-        point1.put("y", getOdometryY());
-        point1.put("angle", getOdometryAngle());
+        point1.put("x", fusedOdometryX);
+        point1.put("y", fusedOdometryY);
+        point1.put("angle", getFusedOdometryTheta());
         point1.put("time", 0.0);
 
+        double wantedAngleToTarget = Math.atan2((targetCenterY - fusedOdometryY), (targetCenterX - fusedOdometryX));
+
         JSONObject point2 = new JSONObject();
-        point2.put("x", getOdometryX());
-        point2.put("y", getOdometryY());
-        point2.put("angle", getOdometryAngle() + turnAngle);
+        point2.put("x", fusedOdometryX);
+        point2.put("y", fusedOdometryY);
+        point2.put("angle", wantedAngleToTarget);
         point2.put("time", 1);
 
         JSONArray turnPath = new JSONArray();
@@ -169,17 +230,176 @@ public class Drive extends SubsystemBase {
 
 
         return turnPath;
-    } 
+    }
+
+    public void updateOdometryFusedArray() {
+        double[] cameraCoordinates = peripherals.getVisionArray();
+        double cameraConfidence = cameraCoordinates[2];
+        double cameraXVal = cameraCoordinates[0];
+        double cameraYVal = cameraCoordinates[1];
+
+        double navxOffset = Math.toRadians(peripherals.getNavxAngle());
+        m_pose = m_odometry.update(new Rotation2d((navxOffset)), leftFront.getState((navxOffset)), rightFront.getState((navxOffset)), leftBack.getState((navxOffset)), rightBack.getState((navxOffset)));
+
+        currentX = getOdometryX();
+        currentY = getOdometryY();
+        currentTheta = getOdometryAngle();
+
+        currentTime = Timer.getFPGATimestamp() - initTime;
+        timeDiff = currentTime - previousTime;
+
+        // determine current velocities based on current position minus previous position divided by time difference
+        currentXVelocity = (currentX - previousX)/timeDiff;
+        currentYVelocity = (currentY - previousY)/timeDiff;
+        currentThetaVelocity = (currentTheta - previousTheta)/timeDiff;
+
+        // determine estimated position by integrating current velocity by time and adding previous estimated position
+        estimatedX = previousEstimateX + (cyclePeriod * currentXVelocity);
+        estimatedY = previousEstimateY + (cyclePeriod * currentYVelocity);
+        estimatedTheta = previousEstimateTheta + (cyclePeriod * currentThetaVelocity);
+
+        previousX = averagedX;
+        previousY = averagedY;
+        previousTheta = averagedTheta;
+        previousTime = currentTime;
+        previousEstimateX = estimatedX;
+        previousEstimateY = estimatedY;
+        previousEstimateTheta = estimatedTheta;
+
+        // cameraConfidence = 0;
+
+        if(cameraConfidence == 0) {
+            // System.out.println("Confidence: " + cameraConfidence);
+            estimatedX = estimatedX * 0.5;
+            estimatedY = estimatedY * 0.5;
+            estimatedTheta = estimatedTheta * 0.5;
+
+            currentX = currentX * 0.5;
+            currentY = currentY * 0.5;
+            currentTheta = currentTheta * 0.5;
+
+            cameraXVal = cameraXVal * 0;
+            cameraYVal = cameraYVal * 0;
+
+            averagedX = estimatedX + currentX + cameraXVal;
+            averagedY = estimatedY + currentY + cameraYVal;
+            averagedTheta = currentTheta + estimatedTheta;
+
+        }
+        else if(cameraConfidence < 3) {
+            // average the odometry position with estimated position
+            estimatedX = estimatedX * 0.5;
+            estimatedY = estimatedY * 0.5;
+            estimatedTheta = estimatedTheta * 0.5;
+
+            currentX = currentX * 0.5;
+            currentY = currentY * 0.5;
+            currentTheta = currentTheta * 0.5;
+
+            cameraXVal = cameraXVal * 0;
+            cameraYVal = cameraYVal * 0;
+
+            averagedX = estimatedX + currentX + cameraXVal;
+            averagedY = estimatedY + currentY + cameraYVal;
+            averagedTheta = currentTheta + estimatedTheta;
+        }
+        else if(cameraConfidence == 3) {
+            estimatedX = estimatedX * 0.425;
+            estimatedY = estimatedY * 0.425;
+            estimatedTheta = estimatedTheta * 0.5;
+
+            currentX = currentX * 0.425;
+            currentY = currentY * 0.425;
+            currentTheta = currentTheta * 0.5;
+
+            cameraXVal = cameraXVal * 0.15;
+            cameraYVal = cameraYVal * 0.15;
+
+            averagedX = estimatedX + currentX + cameraXVal;
+            averagedY = estimatedY + currentY + cameraYVal;
+            averagedTheta = currentTheta + estimatedTheta;
+        }
+        else if(cameraConfidence == 4) {
+            estimatedX = estimatedX * 0.375;
+            estimatedY = estimatedY * 0.375;
+            estimatedTheta = estimatedTheta * 0.5;
+
+            currentX = currentX * 0.375;
+            currentY = currentY * 0.375;
+            currentTheta = currentTheta * 0.5;
+
+            cameraXVal = cameraXVal * 0.25;
+            cameraYVal = cameraYVal * 0.25;
+
+            averagedX = estimatedX + currentX + cameraXVal;
+            averagedY = estimatedY + currentY + cameraYVal;
+            averagedTheta = currentTheta + estimatedTheta;
+        }
+        else if(cameraConfidence == 5) {
+            estimatedX = estimatedX * 0.35;
+            estimatedY = estimatedY * 0.35;
+            estimatedTheta = estimatedTheta * 0.5;
+
+            currentX = currentX * 0.35;
+            currentY = currentY * 0.35;
+            currentTheta = currentTheta * 0.5;
+
+            cameraXVal = cameraXVal * 0.3;
+            cameraYVal = cameraYVal * 0.3;
+
+            averagedX = estimatedX + currentX + cameraXVal;
+            averagedY = estimatedY + currentY + cameraYVal;
+            averagedTheta = currentTheta + estimatedTheta;
+        }
+        else if(cameraConfidence > 5) {
+            estimatedX = estimatedX * 0.5;
+            estimatedY = estimatedY * 0.5;
+            estimatedTheta = estimatedTheta * 0.5;
+
+            currentX = currentX * 0.5;
+            currentY = currentY * 0.5;
+            currentTheta = currentTheta * 0.5;
+
+            cameraXVal = cameraXVal * 0;
+            cameraYVal = cameraYVal * 0;
+
+            averagedX = estimatedX + currentX + cameraXVal;
+            averagedY = estimatedY + currentY + cameraYVal;
+            averagedTheta = currentTheta + estimatedTheta;
+        }
+
+        currentFusedOdometry[0] = averagedX;
+        currentFusedOdometry[1] = averagedY;
+        currentFusedOdometry[2] = averagedTheta;
+
+
+        
+    }
+
+    public double getFusedOdometryX() {
+        return currentFusedOdometry[0];
+    }
+
+    public double getFusedOdometryY() {
+        return currentFusedOdometry[1];
+    }
+
+    public double getFusedOdometryTheta() {
+        return currentFusedOdometry[2];
+    }
 
     public double getOdometryX() {
+        // return currentFusedOdometry[0];
         return m_odometry.getPoseMeters().getX();
     }
 
     public double getOdometryY() {
+        // return currentFusedOdometry[1];
         return m_odometry.getPoseMeters().getY();
     }
 
     public double getOdometryAngle() {
+        // return currentFusedOdometry[2];
         return m_odometry.getPoseMeters().getRotation().getRadians();
     }
 
@@ -215,15 +435,44 @@ public class Drive extends SubsystemBase {
         }
     }
 
+    public void driveAutoAligned(double turnRadiansPerSec) {
+        updateOdometryFusedArray();
+
+        double originalX = -OI.getDriverLeftY();
+        double originalY = -OI.getDriverLeftX();
+
+        if(Math.abs(originalX) < 0.05) {
+            originalX = 0;
+        }
+        if(Math.abs(originalY) < 0.05) {
+            originalY = 0;
+        }
+
+        double navxOffset = Math.toRadians(peripherals.getNavxAngle());
+        double xPower = getAdjustedX(originalX, originalY);
+        double yPower = getAdjustedY(originalX, originalY);
+
+        double xSpeed = xPower * Constants.TOP_SPEED;
+        double ySpeed = yPower * Constants.TOP_SPEED;
+
+        Vector controllerVector = new Vector(xSpeed, ySpeed);
+
+        leftFront.velocityDrive(controllerVector, turnRadiansPerSec, navxOffset);
+        rightFront.velocityDrive(controllerVector, turnRadiansPerSec, navxOffset);
+        leftBack.velocityDrive(controllerVector, turnRadiansPerSec, navxOffset);
+        rightBack.velocityDrive(controllerVector, turnRadiansPerSec, navxOffset);
+    }
+
     // method to actually run swerve code
     public void teleopDrive() {
+        updateOdometryFusedArray();
+
+        System.out.println("X: " + getFusedOdometryX() + " Y: " + getFusedOdometryY() + " Theta: " + getFusedOdometryTheta());
+
         double turnLimit = 1;
         // this is correct, X is forward in field, so originalX should be the y on the joystick
         double originalX = -OI.getDriverLeftY();
         double originalY = -OI.getDriverLeftX();
-
-        // System.out.println("Original X: " + originalX);
-        // System.out.println("Original Y: " + originalY);
 
         if(Math.abs(originalX) < 0.05) {
             originalX = 0;
@@ -242,8 +491,20 @@ public class Drive extends SubsystemBase {
 
         Vector controllerVector = new Vector(xSpeed, ySpeed);
 
-        //System.out.println("NAVX: " + peripherals.getNavxAngle());
-        m_pose = m_odometry.update(new Rotation2d((navxOffset)), leftFront.getState((navxOffset)), rightFront.getState((navxOffset)), leftBack.getState((navxOffset)), rightBack.getState((navxOffset)));
+        double[] odometryList = new double[3];
+
+        odometryList[0] = getFusedOdometryX();
+        odometryList[1] = getFusedOdometryY();
+        odometryList[2] = getFusedOdometryTheta();
+
+        // String strOdomList = (odometryList).toString();
+        // System.out.println(strOdomList);
+
+        // MqttMessage message = new MqttMessage(strOdomList.getBytes());
+
+        // publish.publish("/pathTool", message);
+
+        System.out.println("X: " + getFusedOdometryX() + " Y: " + getFusedOdometryY() + " Theta: " + getFusedOdometryTheta());
 
         leftFront.velocityDrive(controllerVector, turn, navxOffset);
         rightFront.velocityDrive(controllerVector, turn, navxOffset);
@@ -255,23 +516,28 @@ public class Drive extends SubsystemBase {
         // leftBack.testDrive();
         // rightBack.testDrive();
 
-        // System.out.println(peripherals.getNavxAngle());
-
-        rightFront.postDriveMotorTics();
-
-        // System.out.println(m_odometry.getPoseMeters());
-        // System.out.println("Rate: " + peripherals.getNavxRate());
     }
 
     public void autoDrive(Vector velocityVector, double turnRadiansPerSec) {
+        updateOdometryFusedArray();
         double navxOffset = Math.toRadians(peripherals.getNavxAngle());
-        // System.out.println("OFFSET IN AUTODRIVE: " + Math.toDegrees(navxOffset));
-        // System.out.println("NAVX ANGLE: " + (peripherals.getNavxAngle()));
+
+        double[] odometryList = new double[3];
+
+        odometryList[0] = getFusedOdometryX();
+        odometryList[1] = getFusedOdometryY();
+        odometryList[2] = getFusedOdometryTheta();
+
+        // String strOdomList = (odometryList).toString();
+
+        // MqttMessage message = new MqttMessage(strOdomList.getBytes());
+
+        // publish.publish("/pathTool", message);
+
+        System.out.println("X: " + getFusedOdometryX() + " Y: " + getFusedOdometryY() + " Theta: " + getFusedOdometryTheta());
 
         // m_pose = m_odometry.update(new Rotation2d(Math.toRadians(-navxOffset)), leftFront.getState(Math.toRadians(-navxOffset)), rightFront.getState(Math.toRadians(-navxOffset)), leftBack.getState(Math.toRadians(-navxOffset)), rightBack.getState(Math.toRadians(-navxOffset)));
-        m_pose = m_odometry.update(new Rotation2d(navxOffset), leftFront.getState(navxOffset), rightFront.getState(navxOffset), leftBack.getState(navxOffset), rightBack.getState(navxOffset));
-
-        // System.out.println(m_odometry.getPoseMeters());
+        // m_pose = m_odometry.update(new Rotation2d(navxOffset), leftFront.getState(navxOffset), rightFront.getState(navxOffset), leftBack.getState(navxOffset), rightBack.getState(navxOffset));
 
         leftFront.velocityDrive(velocityVector, turnRadiansPerSec, navxOffset);
         rightFront.velocityDrive(velocityVector, turnRadiansPerSec, navxOffset);
