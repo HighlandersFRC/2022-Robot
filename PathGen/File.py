@@ -43,6 +43,13 @@ class File:
             if f.endswith('.json'):
                 self.scp.get(remote_path='/home/lvuser/deploy/' + f, local_path='json-paths/')
         
+    def getListFromJSON(self, jsonObject):
+        returnList = []
+        with open(jsonObject) as jsonList:
+            for i in range(0, len(jsonList)):
+                returnList.append(jsonList[i])
+        return returnList
+
     def getSave(self, fileName, fieldWidth, fieldHeight):
         saves = glob.glob("json-paths/*.json*")
         for save in saves:

@@ -7,6 +7,8 @@ import Convert
 from File import File
 import colorsys
 import hashlib
+from Mqtt import Mqtt
+
 
 class Draw:
 
@@ -34,6 +36,18 @@ class Draw:
         self.wheels = []
         self.samplePeriod = 0.01
         self.file = File()
+        self.mqttSub = Mqtt("sub")
+        self.testPath = self.createTestPath()
+
+    def createTestPath(self):
+        path = []
+        x = 8
+        y = 4
+        for i in range(100):
+            path.append((x, y, 0))
+            x += 0.05
+            y += 0.01
+        return path
 
     def getFile(self):
         return self.file
@@ -432,6 +446,8 @@ class Draw:
 
             time += self.samplePeriod
 
+        #self.drawRecordedPath(self.getPixelPath(self.testPath))
+
     def drawWheelColors(self, fL, fR, bL, bR, samplePeriod):
         flColor = (255, 0, 255)
         frColor = (255, 0, 255)
@@ -791,3 +807,13 @@ class Draw:
             wheels = self.getWheelsAtPoint((x, y), wheelTheta)
             wheels.append(nextPointIndex)
             return wheels
+
+    def getPixelPath(self, fieldPath):
+        pixelPath = []
+        for p in fieldPath:
+            pixelPath.append(Convert.getPixelPos((p[0], p[1])))
+        return pixelPath
+
+    def drawRecordedPath(self, pixelPath):
+        for p in pixelPath:
+            self.pygame.draw.circle(self.screen, (0, 150, 0), p, 1)
