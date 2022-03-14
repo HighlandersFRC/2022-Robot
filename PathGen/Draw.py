@@ -38,6 +38,7 @@ class Draw:
         self.file = File()
         self.mqttSub = Mqtt("sub")
         self.testPath = self.createTestPath()
+        self.mqttPath = []
 
     def createTestPath(self):
         path = []
@@ -78,6 +79,9 @@ class Draw:
 
         y = self.font.render('+Y', True, (0, 0, 0))
         self.screen.blit(y, (120, 445))
+
+        #Draw mqtt path
+        self.drawMqttPath()
 
     def drawPoints(self):
         self.totalTime = Point.updatePointTimes()
@@ -808,6 +812,11 @@ class Draw:
             wheels.append(nextPointIndex)
             return wheels
 
+    def drawMqttPath(self):
+        self.mqttPath = self.mqttSub.getPath()
+        self.drawRecordedPath(self.getPixelPath(self.mqttPath))
+
+    
     def getPixelPath(self, fieldPath):
         pixelPath = []
         for p in fieldPath:

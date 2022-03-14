@@ -65,8 +65,8 @@ class Mqtt:
     def subscribe(self, client):
         def on_message(client, userdata, msg):
             print("Received " + str(msg.payload.decode("utf-8")) + " from Topic " + str(self.subTopic))
-            if not msg.isDuplicate():
-                self.path.append(msg)
+            #if not msg.isDuplicate():
+            #self.path.append(msg)
 
         # print("Listening")
         client.subscribe(self.subTopic, 2)
