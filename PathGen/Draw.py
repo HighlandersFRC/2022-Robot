@@ -36,19 +36,6 @@ class Draw:
         self.wheels = []
         self.samplePeriod = 0.01
         self.file = File()
-        self.mqttSub = Mqtt("sub")
-        self.testPath = self.createTestPath()
-        self.mqttPath = []
-
-    def createTestPath(self):
-        path = []
-        x = 8
-        y = 4
-        for i in range(100):
-            path.append((x, y, 0))
-            x += 0.05
-            y += 0.01
-        return path
 
     def getFile(self):
         return self.file
@@ -79,9 +66,6 @@ class Draw:
 
         y = self.font.render('+Y', True, (0, 0, 0))
         self.screen.blit(y, (120, 445))
-
-        #Draw mqtt path
-        self.drawMqttPath()
 
     def drawPoints(self):
         self.totalTime = Point.updatePointTimes()
@@ -450,8 +434,6 @@ class Draw:
 
             time += self.samplePeriod
 
-        #self.drawRecordedPath(self.getPixelPath(self.testPath))
-
     def drawWheelColors(self, fL, fR, bL, bR, samplePeriod):
         flColor = (255, 0, 255)
         frColor = (255, 0, 255)
@@ -812,11 +794,6 @@ class Draw:
             wheels.append(nextPointIndex)
             return wheels
 
-    def drawMqttPath(self):
-        self.mqttPath = self.mqttSub.getPath()
-        self.drawRecordedPath(self.getPixelPath(self.mqttPath))
-
-    
     def getPixelPath(self, fieldPath):
         pixelPath = []
         for p in fieldPath:
